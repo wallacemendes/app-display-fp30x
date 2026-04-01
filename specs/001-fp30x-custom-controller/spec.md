@@ -194,7 +194,7 @@ A power user wants the piano to retain settings (Key Touch sensitivity, selected
 - **FR-007**: System MUST organize tones in a categorized grid or tabbed interface — not a single scrollable list.
 - **FR-008**: System MUST visually highlight the currently selected/active tone.
 - **FR-009**: System MUST send GM2 System On SysEx (F0 7E 7F 09 03 F7) before sending GM2 tone selections, and respect the 50ms post-message delay.
-- **FR-010**: System MUST use a high-contrast dark theme (light text on absolute black background) as the only visual mode.
+- **FR-010**: System MUST follow the device's system appearance setting (light/dark mode) by default, with a manual toggle to override. Both themes MUST use high-contrast palettes (dark: light text on absolute black `#000000`; light: deep foreground on pure white `#FFFFFF`) meeting WCAG AA contrast ratios. Theme preference (system / light / dark) MUST be persisted locally.
 - **FR-011**: System MUST prevent the device screen from turning off while the app is in the foreground during active use (wake lock).
 - **FR-012**: System MUST persist favorite tones locally across app sessions.
 - **FR-012a**: System MUST open directly to the tone browser as the landing screen, pre-selecting the last-used category from the previous session. BLE connection MUST proceed automatically in the background.

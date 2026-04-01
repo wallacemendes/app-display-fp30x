@@ -119,7 +119,9 @@ Minimal app-level settings.
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
 | lastUsedCategory | enum | Last viewed tone category | `piano` · `epiano_keys_organ` · `other` · `drums` |
-| defaultPresetId | string? | ID of the default preset | Valid preset ID or null |
+| themePreference | enum | User's theme override | `system` · `light` · `dark` (default: `system`) |
+
+**Note**: The default preset is determined by `Preset.isDefault` (at most one can be `true`). There is no separate `defaultPresetId` here to avoid dual source of truth.
 
 **Persistence**: Stored in MMKV. Survives app restarts.
 

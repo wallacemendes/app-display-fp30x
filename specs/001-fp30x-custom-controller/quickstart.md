@@ -108,5 +108,5 @@ npx react-native run-ios --device
 2. **FP-30X must be in Bluetooth pairing mode** — press Function + Bluetooth on the piano
 3. **GM2 System On SysEx** — must send `F0 7E 7F 09 03 F7` and wait 50ms before GM2 tone selection
 4. **All MIDI on channel 1** — status bytes use lower nibble 0x0
-5. **Dark mode only** — no light theme, use `#000000` as base background
+5. **System-adaptive theme** — follows device light/dark setting by default; manual toggle available. Dark base is `#000000`, light base is `#FFFFFF`. High contrast in both modes.
 6. **Wake lock** — activate `KeepAwake` component in the root App component

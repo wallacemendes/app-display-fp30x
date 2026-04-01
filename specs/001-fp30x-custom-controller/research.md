@@ -76,8 +76,7 @@
 
 ### Decision: Custom components on React Native core primitives
 
-**Rationale**: The app's dark-mode-only, high-contrast design with card grids and pill bars is highly specific. Using a generic UI library (React Native Paper, NativeBase) would require extensive theming overrides and add unnecessary bundle size. Custom components ensure:
-- Absolute black (#000000) backgrounds
+**Rationale**: The app's system-adaptive, high-contrast design with card grids and pill bars is highly specific. Using a generic UI library (React Native Paper, NativeBase) would require extensive theming overrides and add unnecessary bundle size. Custom components ensure:
 - Precise card grid layouts (2-col iPhone, 3-4 col iPad)
 - Haptic feedback integration for long-press favorites
 - Performance-optimized FlatList for tone grids

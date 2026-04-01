@@ -5,25 +5,33 @@
 
 ## Summary
 
-Build a React Native (iOS-first) mobile app that acts as a remote control surface for the Roland FP-30X digital piano via BLE MIDI. The MVP (Phase 1) delivers: BLE MIDI connection with auto-reconnect, a tone browser for 65 built-in SuperNATURAL tones and 256 GM2 voices, favorites with local persistence, and a preset system that batch-sends MIDI commands to restore the piano's state after power-on. The app uses a high-contrast dark theme with wake lock for performance use.
+Build a React Native (iOS-first) mobile app that acts as a remote control surface for the Roland FP-30X digital piano via BLE MIDI. The MVP (Phase 1) delivers: BLE MIDI connection with auto-reconnect, a tone browser for 65 built-in SuperNATURAL tones and 256 GM2 voices, favorites with local persistence, and a preset system that batch-sends MIDI commands to restore the piano's state after power-on. The app uses a system-adaptive high-contrast theme (follows device appearance with manual override) and wake lock for performance use.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x on React Native 0.76+  
 **Primary Dependencies**: react-native-ble-plx (BLE), @react-navigation/bottom-tabs (navigation), zustand (state), react-native-mmkv (persistence), react-native-keep-awake (wake lock), react-native-haptic-feedback (haptics)  
 **Storage**: MMKV (key-value, synchronous, local)  
-**Testing**: Jest + React Native Testing Library (unit/component), Detox (E2E on physical device)  
+**Testing**: TDD strictly enforced using Jest + React Native Testing Library (unit/component), Detox (E2E on physical device). Tests must be run after implementation to guarantee outcomes.
 **Target Platform**: iOS 15+ (iPhone primary, iPad adaptive) — React Native for future Android expansion  
 **Project Type**: mobile-app  
-**Performance Goals**: <100ms tone selection response, <5s BLE connection, 60fps UI  
-**Constraints**: Offline-capable, dark-mode-only, BLE MIDI requires physical device testing, piano volatile memory (no state readback)  
+**Performance Goals**: <200ms tone selection response (SC-002), <5s BLE connection (SC-003), 60fps UI  
+**Constraints**: Offline-capable, system-adaptive high-contrast UI (Constitution III), BLE MIDI requires physical device testing, piano volatile memory (no state readback)  
 **Scale/Scope**: Single-user, 321 tone catalog, ~5 screens, ~20 presets max expected
 
 ## Constitution Check
 
-*GATE: Constitution is an unfilled template — no project-specific gates to enforce. Proceeding.*
+*GATE: Constitution v1.1.0 ratified 2026-04-01 — 7 principles verified.*
 
-No violations. The constitution file contains only placeholder content. The project is free to define its own patterns.
+| Principle | Status | Notes |
+|-----------|--------|-------|
+| I. Offline-First & Hardware-Authoritative | ✅ Pass | All data bundled; no network calls; MIDI Implementation doc is sole source |
+| II. One-Way State Injector | ✅ Pass | Write-only control surface; PerformanceState mirror; pending-tone queue on disconnect |
+| III. System-Adaptive High-Contrast UI | ✅ Pass | Follows device appearance; manual override toggle; WCAG AA in both themes |
+| IV. MIDI Protocol Fidelity | ✅ Pass | CC0→CC32→PC sequence; GM2 SysEx + 50ms delay; BLE MIDI timestamp headers |
+| V. Phased Delivery | ✅ Pass | 3-phase roadmap; nullable fields for future params; no Phase 2 code in Phase 1 |
+| VI. Feature-Module Architecture | ✅ Pass | `src/features/` vertical slices; shared `services/` and `store/` |
+| VII. Simplicity & YAGNI | ✅ Pass | Zustand+MMKV only; no generic component library; no unnecessary abstractions |
 
 ## Project Structure
 
@@ -75,7 +83,7 @@ src/
 │   ├── performanceStore.ts       # Active tone, pending tone, parameter mirror
 │   ├── favoritesStore.ts         # Favorite tone IDs (persisted)
 │   ├── presetsStore.ts           # Preset CRUD + default management (persisted)
-│   └── settingsStore.ts          # Last-used category, default preset ID (persisted)
+│   └── appSettingsStore.ts       # Last-used category, theme preference (persisted)
 │
 ├── services/midi/                # MIDI protocol layer
 │   ├── midiEncoder.ts            # Build CC, PC, SysEx byte arrays
@@ -87,12 +95,28 @@ src/
 │   └── gm2Tones.json            # 256 GM2 tones (MSB/LSB/PC)
 │
 └── theme/                        # Design system
-    ├── colors.ts                 # Dark palette (#000 bg, light text)
+    ├── colors.ts                 # System-adaptive palette (dark: #000 bg; light: #FFF bg)
     ├── spacing.ts                # Grid spacing constants
     └── typography.ts             # Font system
 ```
 
 **Structure Decision**: Feature-sliced architecture with shared services and stores. Each feature module is self-contained with its own screens, components, and hooks. Cross-cutting concerns (MIDI, BLE, persistence) live in shared `services/` and `store/` directories.
+
+## Coding Patterns & Architecture
+
+Following `@react-native-best-practices` and `@react-native-architecture` standards:
+
+1. **Test-Driven Development (TDD)**:
+   - TDD is strictly enforced. For each feature, write tests outlining the expected outcomes *first*.
+   - Run tests immediately after implementation to fully guarantee the functionality.
+2. **Code Quality**:
+   - Apply rigorous linting and code formatting using **ESLint** and **Prettier** with the most recommended React Native settings.
+3. **State Management & Architecture**:
+   - Feature-sliced offline-first architecture using atomic state (Zustand + MMKV) to minimize re-renders.
+4. **Performance (FPS & Re-renders)**:
+   - Use `FlashList` or `FlatList` for tone grids to prevent scroll jank.
+   - Use `useDeferredValue` for heavy state computations (like filtering tones) to maintain 60 FPS.
+   - Optimize view hierarchies and avoid excessive wrappers (flattening) to optimize TTI (Time to Interactive).
 
 ## Complexity Tracking
 
@@ -119,15 +143,15 @@ No complexity violations to track — constitution has no gates defined.
 
 ### Phase 2: Tone Catalog & Browser UI
 
-**Goal**: Full tone browser with categories, card grid, and the dark theme.
+**Goal**: Full tone browser with categories, card grid, and the system-adaptive high-contrast theme.
 
 **Deliverables**:
 1. Static JSON tone catalogs (`tones.json`, `gm2Tones.json`) — extracted from MIDI Implementation doc
 2. `ToneBrowserScreen` with `CategoryPills` + card grid
-3. `ToneCard` component (dark theme, highlighted active tone)
+3. `ToneCard` component (high-contrast styling, highlighted active tone)
 4. `GM2BrowserScreen` with GM2 family groupings
 5. `ConnectionIndicator` (status dot in nav bar)
-6. Dark theme system (`colors.ts`, `typography.ts`, `spacing.ts`)
+6. System-adaptive theme system (`colors.ts`, `typography.ts`, `spacing.ts`) — light and dark palettes
 7. Bottom tab navigator (Tones · GM2 · Favorites · Presets)
 8. Wake lock activation
 
@@ -156,7 +180,7 @@ No complexity violations to track — constitution has no gates defined.
 4. Batch MIDI send on preset apply
 5. Auto-apply default preset on first connection (not on reconnection)
 6. `PresetsScreen` and `PresetDetailScreen`
-7. `settingsStore` for last-used category + default preset ID
+7. `appSettingsStore` for last-used category + theme preference
 
 **Verification**: Save preset → restart app → connect → default preset auto-applied → hear correct tone. Disconnect/reconnect → preset NOT re-applied.
 
@@ -169,7 +193,7 @@ No complexity violations to track — constitution has no gates defined.
 2. Edge case handling (disconnection alerts, pending tone queue, rapid-tap debounce, power-cycle detection)
 3. Pre-connection browsing with queued tone
 4. Empty states (no favorites, no presets)
-5. App icon and splash screen (dark theme)
+5. App icon and splash screen (system-adaptive, both light and dark variants)
 6. Performance optimization (FlatList, memo, lazy tabs)
 
 **Verification**: Full acceptance scenario testing per spec. SC-001 through SC-010 validated.
