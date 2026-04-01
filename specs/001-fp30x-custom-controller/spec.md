@@ -13,13 +13,22 @@ This specification is organized in three delivery phases. Each phase is independ
 - **Phase 2 — Parameter & Effect Controls**: Live performance parameters (Volume, Reverb, Chorus, Pan, Expression). Turns the app from a tone selector into a real performance control surface.
 - **Phase 3 — Deep Hardware / SysEx (Future Backlog)**: SysEx-based deep parameter control (Master Tuning, Brightness, effects engine types). Research-driven: includes reverse engineering the official app for undocumented capabilities like memory persistence.
 
+## Clarifications
+
+### Session 2026-03-31
+
+- Q: What is the primary screen the user lands on after connecting? → A: Tone browser with the last-used category pre-selected (auto-connects in background).
+- Q: Which MIDI channel should the app send tone-change messages on? → A: Always channel 1 (match the piano's default).
+- Q: Which platform ships first for the MVP? → A: iOS first, Android follows after MVP validation.
+- Q: What should happen when the user taps a tone before connection is established? → A: Allow browsing freely; queue the last-tapped tone and auto-send it once connected.
+
 ## User Scenarios & Testing
 
 ### Phase 1 — MVP
 
 #### User Story 1 - Connect to Piano (Priority: P1 · Phase 1)
 
-A pianist powers on their FP-30X and opens the app. The app scans for nearby BLE MIDI devices, identifies the FP-30X by its device identity signature, and establishes a connection. The pianist sees a clear connection status indicator confirming the piano is ready to receive commands.
+A pianist powers on their FP-30X and opens the app. The app immediately shows the tone browser (the landing screen) while auto-connecting to a previously paired FP-30X in the background. A persistent connection status indicator transitions from "Connecting..." to "Connected" once the BLE MIDI link is established. If no previously paired device is found, the app shows a device scan/selection overlay.
 
 **Why this priority**: Nothing else works without a confirmed connection. This is the foundation for all other features.
 
@@ -36,7 +45,7 @@ A pianist powers on their FP-30X and opens the app. The app scans for nearby BLE
 
 #### User Story 2 - Browse and Select Built-In Tones (Priority: P1 · Phase 1)
 
-A pianist wants to change the sound on their FP-30X. They open the tone browser, which organizes all available SuperNATURAL built-in sounds into intuitive categories (Piano, E.Piano/Keys/Organ, Strings/Pads/Ensemble, Drum Kits). They tap a tone name and the piano immediately switches to that sound. The browsing experience is fast, grid-based, and requires no scrolling through endless lists.
+The tone browser is the app's landing screen — it is the first thing the user sees when the app opens. It organizes all available SuperNATURAL built-in sounds into intuitive categories (Piano, E.Piano/Keys/Organ, Strings/Pads/Ensemble, Drum Kits), pre-selecting the last-used category from the previous session. The user taps a tone name and the piano immediately switches to that sound. The browsing experience is fast, grid-based, and requires no scrolling through endless lists.
 
 **Why this priority**: This is the core value proposition — the entire reason the app exists. The official app makes tone selection clumsy; this app must make it instant and pleasant. The piano loses its tone selection when powered off, so the app acts as a fast state injector at power-on.
 
@@ -144,6 +153,7 @@ A power user wants the piano to retain settings (Key Touch sensitivity, selected
 - What happens when the piano is power-cycled? The piano resets to its default state. The app should indicate that the piano may have reset and offer a "re-send current tone" action.
 - What happens if multiple BLE MIDI devices are nearby? The app should list all discovered devices and let the user choose, with preference given to previously connected FP-30X units.
 - What happens when the user rapidly taps multiple tones in succession? Only the last-tapped tone should be applied; intermediate selections should be debounced or superseded.
+- What happens when the user taps a tone before the BLE connection has finished establishing? The app allows full browsing and tone selection while disconnected. The last-tapped tone is queued and automatically sent to the piano once the connection is established. The UI highlights the queued tone with a visual indicator (e.g., "pending" state) until confirmed.
 
 ## Requirements
 
@@ -154,13 +164,16 @@ A power user wants the piano to retain settings (Key Touch sensitivity, selected
 - **FR-003**: System MUST automatically attempt reconnection to a previously paired FP-30X when the app is launched.
 - **FR-004**: System MUST contain a complete hardcoded catalog of all FP-30X built-in tones (12 Piano, 20 E.Piano/Keys/Organ, 24 Other, 9 Drum Kits) with their correct Bank Select MSB, Bank Select LSB, and Program Change values.
 - **FR-005**: System MUST contain a complete hardcoded catalog of all 256 GM2 tones with their correct Bank Select MSB (121), LSB, and Program Change values.
-- **FR-006**: System MUST send the correct MIDI message sequence (CC 0 Bank Select MSB → CC 32 Bank Select LSB → Program Change) when the user selects a tone.
+- **FR-006**: System MUST send the correct MIDI message sequence (CC 0 Bank Select MSB → CC 32 Bank Select LSB → Program Change) on MIDI channel 1 when the user selects a tone.
 - **FR-007**: System MUST organize tones in a categorized grid or tabbed interface — not a single scrollable list.
 - **FR-008**: System MUST visually highlight the currently selected/active tone.
 - **FR-009**: System MUST send GM2 System On SysEx (F0 7E 7F 09 03 F7) before sending GM2 tone selections, and respect the 50ms post-message delay.
 - **FR-010**: System MUST use a high-contrast dark theme (light text on absolute black background) as the only visual mode.
 - **FR-011**: System MUST prevent the device screen from turning off while the app is in the foreground during active use (wake lock).
 - **FR-012**: System MUST persist favorite tones locally across app sessions.
+- **FR-012a**: System MUST open directly to the tone browser as the landing screen, pre-selecting the last-used category from the previous session. BLE connection MUST proceed automatically in the background.
+- **FR-012b**: System MUST persist the last-used tone category locally so it can be restored on next launch.
+- **FR-012c**: System MUST allow tone browsing and selection while BLE connection is in progress. The last-selected tone MUST be queued and automatically sent to the piano when the connection is established.
 
 ### Functional Requirements — Phase 2 (Parameter Controls)
 
@@ -209,6 +222,7 @@ A power user wants the piano to retain settings (Key Touch sensitivity, selected
 
 - The user owns a Roland FP-30X with Bluetooth MIDI functionality enabled and working.
 - The user's mobile device supports Bluetooth Low Energy (BLE) and the platform's native MIDI connectivity.
+- The MVP targets iOS exclusively. Android support follows after the iOS MVP is validated. The cross-platform architecture should accommodate future Android expansion without a full rewrite.
 - The FP-30X MIDI Implementation document (Version 1.00, Aug 2021) is the authoritative and complete source for all documented MIDI messages. Phase 3 features may rely on undocumented commands discovered through reverse engineering.
 - The piano's volatile memory behavior (resets to defaults on power off) is a permanent hardware constraint that cannot be changed by the app — unless Phase 3 reverse engineering discovers a persistence mechanism.
 - The app does not need to read back the piano's current state — it operates as a one-way control surface that maintains its own state mirror.
@@ -218,3 +232,4 @@ A power user wants the piano to retain settings (Key Touch sensitivity, selected
 - Split/Layer mode configuration is out of scope for all phases (not exposed via the FP-30X MIDI Implementation document).
 - The app is single-user; no accounts, authentication, or cloud sync are required.
 - Phase 1 (MVP) is the immediate development target. Phase 2 and Phase 3 are planned but not committed to a timeline.
+- All MIDI messages are sent on channel 1 (the FP-30X's default receive channel). Multi-channel support is out of scope.
