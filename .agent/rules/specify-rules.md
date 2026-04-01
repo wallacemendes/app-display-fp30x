@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # app-display-fp30x Development Guidelines
 
 Auto-generated from all feature plans. Last updated: 2026-04-01
@@ -133,4 +137,7 @@ npm run dev            # Start Metro bundler
 - 001-fp30x-custom-controller: Full specification, plan, and task breakdown completed. Constitution v1.1.0 ratified. TDD, ESLint, and Prettier mandated. System-adaptive high-contrast theme adopted.
 
 <!-- MANUAL ADDITIONS START -->
+
+1. When uncertain about the MIDI Implementation parameters, always check the documentation file `docs/FP-30X_MIDI_Imple_eng01_W.md` (for easy readiness in markdown format) or `docs/FP-30X_MIDI_Imple_eng01_W.pdf` (for 100% fidelity of the original doc file). 
+
 <!-- MANUAL ADDITIONS END -->
