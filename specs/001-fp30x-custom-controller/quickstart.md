@@ -75,7 +75,7 @@ src/
 │           └── usePresets.ts
 ├── data/                     # Static data
 │   ├── tones.json            # Built-in tone catalog (65 tones)
-│   └── gm2-tones.json       # GM2 catalog (256 tones)
+│   └── gm2Tones.json        # GM2 catalog (256 tones)
 ├── store/                    # Zustand stores
 │   ├── connectionStore.ts
 │   ├── performanceStore.ts

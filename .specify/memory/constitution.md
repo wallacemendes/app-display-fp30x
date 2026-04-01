@@ -92,8 +92,12 @@ defined in the FP-30X MIDI Implementation document.
   sending any subsequent message.
 - BLE MIDI packets MUST include proper timestamp headers per the
   BLE MIDI specification.
-- SysEx messages (Phase 3) MUST use the Roland manufacturer ID
-  (`41H`) and correct device family bytes (`19H 03H`).
+- FP-30X device-specific SysEx messages (Phase 3) MUST use the
+  Roland manufacturer ID (`41H`) with the correct device family
+  bytes (`19H 03H`). Universal SysEx messages (Phase 3) MUST use
+  the appropriate `7E`/`7F` IDs and formats as defined by the MIDI
+  specification and are exempt from the Roland manufacturer ID
+  requirement.
 - Rapid user input (e.g., fast tone tapping) MUST be debounced so
   only the last selection is sent.
 

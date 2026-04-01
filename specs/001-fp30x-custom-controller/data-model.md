@@ -132,7 +132,6 @@ erDiagram
     Tone ||--o{ Preset : "referenced by"
     Tone ||--o{ FavoriteToneIds : "listed in"
     Tone ||--o| PerformanceState : "active in"
-    Preset ||--o| AppSettings : "default in"
     DeviceConnection ||--|| PerformanceState : "controls"
 ```
 

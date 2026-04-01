@@ -105,7 +105,7 @@ Follow `@react-native-best-practices` and `@react-native-architecture` skills:
 ### MIDI Protocol Rules
 
 - Tone selection: `CC 0 (MSB) → CC 32 (LSB) → Program Change` on MIDI channel 1.
-- GM2 activation: Send `F0 7E 7F 09 03 F6` SysEx, then wait ≥ 50ms before next message.
+- GM2 activation: Send `F0 7E 7F 09 03 F7` SysEx, then wait ≥ 50ms before next message.
 - BLE MIDI packets MUST include proper timestamp headers.
 - Rapid user input MUST be debounced — only the last tone selection is sent.
 - All MIDI message construction MUST be in pure TypeScript (no native modules).
