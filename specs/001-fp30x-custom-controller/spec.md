@@ -24,6 +24,11 @@ This specification is organized in three delivery phases. Each phase is independ
 - Q: Should the app support presets (saved states)? → A: Yes. Users can save the entire app state as a Preset and apply it with one tap to batch-send all MIDI commands. A default preset auto-applies on first connection after app launch, but NOT on reconnection (to avoid disrupting live performance).
 - Q: Should the UI adapt for tablet? → A: Yes. iPhone-first but the UI must be adaptive for iPad/tablet layouts.
 - Q: Tech stack? → A: React Native.
+- Q: Navigation pattern? → A: Bottom tab bar (Tones · GM2 · Favorites · Presets; + Controls tab added in Phase 2).
+- Q: Tone grid layout? → A: Card grid — 2 columns on iPhone, 3-4 columns on iPad. Tone name centered in each card.
+- Q: Category switching within Tones tab? → A: Top horizontal pill/segment bar (Piano · E.Piano · Other · Drums) — always visible, instant content swap.
+- Q: Connection status indicator? → A: Small status dot/icon in the navigation bar header (green=connected, yellow=connecting, red=disconnected). Tappable to expand connection details.
+- Q: How to favorite a tone? → A: Long-press on a tone card to toggle favorite (haptic feedback + star animation). Primary tap reserved for tone selection.
 
 ## User Scenarios & Testing
 
