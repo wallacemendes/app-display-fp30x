@@ -62,7 +62,7 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 - [ ] T020 [US1] Implement `MidiService.ts` for sending/receiving BLE MIDI packets in `src/features/connection/services/MidiService.ts`
 - [ ] T021 [US1] Create custom hook `useConnection.ts` to manage BLE lifecycle states
 - [ ] T022 [US1] Build `ConnectionIndicator.tsx` UI component for displaying the connection status
-- [ ] T023 [P] [US1] Create basic App Settings store in `src/store/appSettingsStore.ts` to persist theme preference (system/light/dark), auto-reconnect behavior, and last-used tone category (FR-012b)
+- [ ] T023 [P] [US1] Create basic App Settings store in `src/store/appSettingsStore.ts` to persist theme preference (system/light/dark) and last-used tone category (FR-012b)
 - [ ] T024 [US1] Integrate `ConnectionIndicator.tsx` into the main `TabNavigator.tsx` header
 
 ### Validation

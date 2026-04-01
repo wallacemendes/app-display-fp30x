@@ -18,7 +18,7 @@ This document defines the interface contract between the app and the Roland FP-3
 
 The FP-30X is identified via MIDI Identity Reply (SysEx):
 ```
-F0 7E 10 06 02 41 19 03 00 00 00 00 01 00 00 F7
+F0 7E 10 06 02 41 19 03 00 00 1C 01 00 00 F7
    │        │  │  │──┘
    │        │  │  └─ Device Family (FP-30X)
    │        │  └──── Manufacturer ID (Roland = 41H)
