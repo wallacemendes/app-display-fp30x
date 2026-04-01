@@ -1,0 +1,13 @@
+# Node/JS
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+
+# Agent tools
+.agents/
+.claude/
+skills-lock.json
