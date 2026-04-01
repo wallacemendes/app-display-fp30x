@@ -1,6 +1,4 @@
-# NitroModules source (required by react-native-mmkv v4)
-source 'https://github.com/aspect-build/aspect-podspecs.git'
-source 'https://cdn.cocoapods.org/'
+
 
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
@@ -20,6 +18,9 @@ end
 
 target 'FP30XController' do
   config = use_native_modules!
+
+  # NitroModules is required by react-native-mmkv v4 but not auto-linked
+  pod 'NitroModules', :path => '../node_modules/react-native-nitro-modules'
 
   use_react_native!(
     :path => config[:reactNativePath],
