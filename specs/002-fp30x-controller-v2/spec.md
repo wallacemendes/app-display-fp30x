@@ -46,6 +46,11 @@ This v2 spec replaces the original's phase structure, functional requirements, a
 - Q: What about reverb/chorus CC? -> A: Does not work over BLE. Confirmed via testing. Removed from scope.
 - Q: Do presets use DT1? -> A: Yes. A preset is a batch of DT1 writes. Tested: 3 DT1 writes complete in ~56ms, all applied, no delays needed.
 - Q: Should presets save the 3 quick-tone slot assignments? -> A: Yes. A preset captures the complete performance setup including the 3 quick-tone slot assignments. When a preset is applied, the quick-tone slots are restored in the app UI (these are app-local, not DT1 commands to the piano).
+- Q: What is the BLE connection timeout? -> A: 5 seconds total (SC-003). The scan must discover and connect within 5s.
+- Q: What does "0/4" beat mean? -> A: 0/4 means the metronome plays without beat accent marks (no "click" on the downbeat). Example: 4/4 = "CLICK da da da CLICK da da da"; 2/4 = "CLICK da CLICK da"; 0/4 = "da da da da da da" (free-running, no accent).
+- Q: What is the pad grid layout? -> A: 4x2 grid (4 pads per row, 2 rows = 8 pads total).
+- Q: Is the pending tone queue session-only or persistent? -> A: Session-only. The queue is cleared when the app is closed. It exists only to handle tones selected while BLE is reconnecting.
+- Q: Should Split/Dual and Key Touch have latency targets? -> A: Yes, < 200ms response for consistency with tone selection (SC-002).
 
 ## User Scenarios & Testing
 
@@ -250,12 +255,14 @@ A pianist needs to transpose the keyboard for accompaniment or adjust touch sens
 
 #### User Story 10 - Assignable Performance Pads (Priority: P1 -- Phase 4)
 
-The PADS tab shows a grid of assignable buttons. Each pad can be configured to send a specific command or sequence of commands (e.g., "set volume to 80", "activate Split mode with Piano+Strings", "toggle metronome"). This transforms the app into a macro controller for live performance.
+The PADS tab shows a 4x2 grid (8 assignable pads — 4 per row, 2 rows) of assignable buttons. Each pad can be configured to send a specific command or sequence of commands (e.g., "set volume to 80", "activate Split mode with Piano+Strings", "toggle metronome"). This transforms the app into a macro controller for live performance. Pad configurations are persisted locally across sessions.
 
 **Acceptance Scenarios**:
 
 1. **Given** the PADS screen is active, **When** the user taps a configured pad, **Then** the assigned command(s) are sent immediately.
 2. **Given** a pad is unconfigured, **When** the user long-presses it, **Then** a configuration dialog appears to assign an action.
+3. **Given** the user has configured pads, **When** they reopen the app, **Then** all pad configurations persist.
+4. **Given** a pad is configured, **When** the user long-presses it, **Then** a dialog appears to reconfigure or clear the pad.
 
 ---
 
@@ -321,7 +328,7 @@ A user wants to back up their presets, share them with another pianist, or migra
 - **FR-013**: System MUST visually highlight the currently active tone and category.
 - **FR-014**: System MUST prevent the device screen from turning off while the app is in the foreground (wake lock).
 - **FR-015**: System MUST persist the last-used tone category locally so it can be restored on next launch.
-- **FR-016**: System MUST allow tone selection while BLE connection is in progress. The last-selected tone MUST be queued and auto-sent once connected.
+- **FR-016**: System MUST allow tone selection while BLE connection is in progress. The last-selected tone MUST be queued and auto-sent once connected. The pending queue is session-only (cleared on app close).
 
 ### Functional Requirements -- Phase 2 (Favorites, Presets & Quick Tones)
 
@@ -342,7 +349,7 @@ A user wants to back up their presets, share them with another pianist, or migra
 
 ### Functional Requirements -- Phase 4 (Pads & Advanced Controls)
 
-- **FR-028**: System MUST provide assignable performance pads (PADS tab) that can each trigger a configured command or command sequence.
+- **FR-028**: System MUST provide a 4x2 grid (8 pads) of assignable performance pads (PADS tab) that can each trigger a configured command or command sequence. Pad configurations MUST persist across sessions.
 - **FR-029**: System MUST support full metronome control: toggle on/off, tempo, beat (6 options), pattern (8 options), volume (0-10), and tone (4 options).
 
 ### Functional Requirements -- Phase 5 (Import/Export)
@@ -382,7 +389,11 @@ A user wants to back up their presets, share them with another pianist, or migra
 
 - **SC-011**: The chord tracker correctly identifies standard triads and seventh chords (major, minor, diminished, augmented, maj7, min7, dom7) when 3 or more notes are held simultaneously.
 - **SC-012**: Chord display updates within 100ms of the last Note On/Off event.
-- **SC-013**: Split/Dual mode activation and per-voice tone assignment work correctly.
+- **SC-013**: Split/Dual mode activation and per-voice tone assignment are applied within 200ms.
+
+#### Phase 4 (Pads & Advanced Controls)
+
+- **SC-013a**: Key touch sensitivity changes are applied within 200ms.
 
 #### Phase 4 (Pads & Advanced Controls)
 
