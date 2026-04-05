@@ -128,12 +128,12 @@
 
 ### Implementation
 
-- [ ] T045 [US3] Implement usePiano hook in `src/hooks/usePiano.ts` — facade combining performanceStore state + PianoService actions. Selective subscriptions for volume, tempo, metronomeOn, metronomeBeat.
-- [ ] T046 [US3] Implement TempoModal in `src/components/modals/TempoModal.tsx` — +1/-1, +5/-5, +10/-10 buttons + "Set BPM" text input. Sends DT1 tempo change on each action. LCD font for BPM display.
-- [ ] T047 [US3] Implement BeatModal in `src/components/modals/BeatModal.tsx` — beat picker (0/4 through 6/4) + rhythm pattern picker (Off + 7 options). Sends DT1 on selection.
-- [ ] T048 [US3] Implement VolumeOverlay in `src/components/modals/VolumeOverlay.tsx` — vertical fader. Sends DT1 volume commands during drag. Debounced.
-- [ ] T049 [US3] Implement StatusBar in `src/screens/display/StatusBar.tsx` — horizontal bar: tempo (tap → TempoModal), beat (tap → BeatModal), metronome (tap → toggle DT1), volume (tap → VolumeOverlay). LCD font for values. NativeWind.
-- [ ] T050 [US3] Integrate StatusBar into DisplayScreen — place at bottom of landscape layout. Wire to usePiano hook. Verify all status items are interactive and update from piano notifications.
+- [x] T045 [US3] Implement usePiano hook in `src/hooks/usePiano.ts` — facade combining performanceStore state + PianoService actions. Selective subscriptions for volume, tempo, metronomeOn, metronomeBeat.
+- [x] T046 [US3] Implement TempoModal in `src/components/modals/TempoModal.tsx` — +1/-1, +5/-5, +10/-10 buttons + "Set BPM" text input. Sends DT1 tempo change on each action. LCD font for BPM display.
+- [x] T047 [US3] Implement BeatModal in `src/components/modals/BeatModal.tsx` — beat picker (0/4 through 6/4) + rhythm pattern picker (Off + 7 options). Sends DT1 on selection.
+- [x] T048 [US3] Implement VolumeOverlay in `src/components/modals/VolumeOverlay.tsx` — vertical fader. Sends DT1 volume commands during drag. Debounced.
+- [x] T049 [US3] Implement StatusBar in `src/screens/display/StatusBar.tsx` — horizontal bar: tempo (tap → TempoModal), beat (tap → BeatModal), metronome (tap → toggle DT1), volume (tap → VolumeOverlay). LCD font for values. NativeWind.
+- [x] T050 [US3] Integrate StatusBar into DisplayScreen — place at bottom of landscape layout. Wire to usePiano hook. Verify all status items are interactive and update from piano notifications.
 
 **Checkpoint**: Phase 1 (Core Display) complete. App connects, browses tones, shows live status, stays in sync bidirectionally.
 

@@ -1,10 +1,10 @@
 /**
- * T037 + T044: Display Screen — Main display with ToneSelector.
+ * T037 + T044 + T050: Display Screen — Main display with ToneSelector + StatusBar.
  *
  * Landing screen for the DISPLAY tab. Landscape layout:
  * - Top-right: ConnectionIndicator
  * - Left/center: ToneSelector (category + tone steppers)
- * - Right: reserved for StatusBar (Phase 5)
+ * - Right: StatusBar (Tempo, Beat, Metronome, Volume)
  *
  * Auto-scans on mount if a previously paired device exists.
  *
@@ -15,6 +15,7 @@ import React, {useEffect} from 'react';
 import {View, Text} from 'react-native';
 import {ConnectionIndicator} from '../../components/ConnectionIndicator';
 import {ToneSelector} from './ToneSelector';
+import {StatusBar} from './StatusBar';
 import {useConnection} from '../../hooks/useConnection';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
@@ -86,34 +87,16 @@ export function DisplayScreen(): React.JSX.Element {
           <ToneSelector />
         </View>
 
-        {/* Right area: reserved for StatusBar (Phase 5) */}
+        {/* Right area: StatusBar (T049/T050) */}
         <View
           style={{
             flex: 2,
-            justifyContent: 'center',
-            alignItems: 'center',
             borderLeftWidth: 1,
             borderLeftColor: colors.border,
             marginLeft: 8,
             paddingLeft: 8,
           }}>
-          <Text
-            style={{
-              ...typography.displayXs,
-              color: colors.textMuted,
-              letterSpacing: 1,
-            }}
-            allowFontScaling={false}>
-            STATUS
-          </Text>
-          <Text
-            style={{
-              ...typography.bodySmall,
-              color: colors.textMuted,
-              marginTop: 4,
-            }}>
-            Phase 5
-          </Text>
+          <StatusBar />
         </View>
       </View>
     </View>
