@@ -247,9 +247,9 @@
 
 ### Implementation
 
-- [ ] T077 [US10] Design pad data model — PadConfig (id, label, commands: DT1Command[]). Store in padConfigStore.
-- [ ] T078 [US10] Implement PadsScreen in `src/screens/pads/PadsScreen.tsx` — grid of pad buttons. Tap → execute commands. Long-press → configure.
-- [ ] T079 [US10] Implement pad configuration dialog — assign DT1 command sequences (volume, tone, mode, metronome toggle, etc.)
+- [x] T077 [US10] Design pad data model — PadConfig (id, label, commands: DT1Command[]). Store in padConfigStore.
+- [x] T078 [US10] Implement PadsScreen in `src/screens/pads/PadsScreen.tsx` — grid of pad buttons. Tap → execute commands. Long-press → configure.
+- [x] T079 [US10] Implement pad configuration dialog — assign DT1 command sequences (volume, tone, mode, metronome toggle, etc.)
 
 **Checkpoint**: Pads functional.
 
@@ -261,8 +261,8 @@
 
 ### Implementation
 
-- [ ] T080 [US11] Extend BeatModal to include pattern, volume (0–10), and tone (Click/Electronic/Japanese/English) selectors
-- [ ] T081 [US11] Wire all metronome params through PianoService → engine buildMetronomeParam() → transport send
+- [x] T080 [US11] Extend BeatModal to include pattern, volume (0–10), and tone (Click/Electronic/Japanese/English) selectors
+- [x] T081 [US11] Wire all metronome params through PianoService → engine buildMetronomeParam() → transport send
 
 **Checkpoint**: Phase 4 complete.
 
@@ -274,10 +274,10 @@
 
 ### Implementation
 
-- [ ] T082 [US12] Define preset file format (JSON with version header + array of Preset objects)
-- [ ] T083 [US12] Implement export: serialize presets → JSON → share via system share sheet (`react-native-share` or Share API)
-- [ ] T084 [US12] Implement import: receive file → parse JSON → conflict detection (same name) → prompt rename/replace/skip → merge into presetsStore
-- [ ] T085 [US12] Add export/import buttons to PresetsScreen
+- [x] T082 [US12] Define preset file format (JSON with version header + array of Preset objects)
+- [x] T083 [US12] Implement export: serialize presets → JSON → share via system share sheet (`react-native-share` or Share API)
+- [x] T084 [US12] Implement import: receive file → parse JSON → conflict detection (same name) → prompt rename/replace/skip → merge into presetsStore
+- [x] T085 [US12] Add export/import buttons to PresetsScreen
 
 **Checkpoint**: Phase 5 complete.
 

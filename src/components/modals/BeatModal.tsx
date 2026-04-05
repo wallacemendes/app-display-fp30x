@@ -1,8 +1,10 @@
 /**
- * T047: BeatModal — Beat (time signature) + rhythm pattern selector.
+ * T047 + T080: BeatModal — Full Metronome Control.
  *
  * Beat picker: 6 options (0/4 free, 2/4, 3/4, 4/4, 5/4, 6/4).
  * Pattern picker: Off + 7 rhythm subdivisions (1-7).
+ * Metronome volume: 0-10 stepper.
+ * Metronome tone: Click / Electronic / Japanese / English.
  *
  * Each selection sends a DT1 command immediately via usePiano.changeMetronomeParam.
  *
@@ -46,6 +48,17 @@ const PATTERN_OPTIONS = [
   {value: 7, label: '7'},
 ] as const;
 
+/**
+ * Metronome tone options: value -> display label.
+ * DT1 metronomeTone: 0=Click, 1=Electronic, 2=Japanese, 3=English.
+ */
+const METRONOME_TONE_OPTIONS = [
+  {value: 0, label: 'Click'},
+  {value: 1, label: 'Electronic'},
+  {value: 2, label: 'Japanese'},
+  {value: 3, label: 'English'},
+] as const;
+
 const hapticOptions = {
   enableVibrateFallback: false,
   ignoreAndroidSystemSettings: false,
@@ -62,7 +75,13 @@ export function BeatModal({
 }: BeatModalProps): React.JSX.Element {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const {metronomeBeat, metronomePattern, changeMetronomeParam} = usePiano();
+  const {
+    metronomeBeat,
+    metronomePattern,
+    metronomeVolume,
+    metronomeTone,
+    changeMetronomeParam,
+  } = usePiano();
 
   const handleBeatSelect = useCallback(
     (value: number) => {
@@ -76,6 +95,30 @@ export function BeatModal({
     (value: number) => {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
       changeMetronomeParam('pattern', value);
+    },
+    [changeMetronomeParam],
+  );
+
+  const handleVolumeDecrement = useCallback(() => {
+    const next = Math.max(0, metronomeVolume - 1);
+    if (next !== metronomeVolume) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+      changeMetronomeParam('volume', next);
+    }
+  }, [metronomeVolume, changeMetronomeParam]);
+
+  const handleVolumeIncrement = useCallback(() => {
+    const next = Math.min(10, metronomeVolume + 1);
+    if (next !== metronomeVolume) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+      changeMetronomeParam('volume', next);
+    }
+  }, [metronomeVolume, changeMetronomeParam]);
+
+  const handleToneSelect = useCallback(
+    (value: number) => {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+      changeMetronomeParam('tone', value);
     },
     [changeMetronomeParam],
   );
@@ -144,7 +187,7 @@ export function BeatModal({
                 ...typography.label,
                 color: colors.textSecondary,
               }}>
-              BEAT & PATTERN
+              METRONOME SETTINGS
             </Text>
             <Pressable
               onPress={onClose}
@@ -226,6 +269,7 @@ export function BeatModal({
               flexDirection: 'row',
               gap: 8,
               flexWrap: 'wrap',
+              marginBottom: 24,
             }}>
             {PATTERN_OPTIONS.map(option => {
               const isSelected = metronomePattern === option.value;
@@ -233,6 +277,128 @@ export function BeatModal({
                 <Pressable
                   key={option.value}
                   onPress={() => handlePatternSelect(option.value)}
+                  style={({pressed}) =>
+                    pressed
+                      ? pillPressedStyle(isSelected)
+                      : pillStyle(isSelected)
+                  }>
+                  <Text
+                    style={{
+                      ...typography.displaySm,
+                      color: isSelected ? colors.categoryText : colors.text,
+                      fontWeight: isSelected ? '700' : '400',
+                    }}
+                    allowFontScaling={false}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Metronome Volume Stepper */}
+          <Text
+            style={{
+              ...typography.label,
+              color: colors.textMuted,
+              marginBottom: 10,
+            }}>
+            METRONOME VOLUME
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+              marginBottom: 24,
+            }}>
+            <Pressable
+              onPress={handleVolumeDecrement}
+              style={({pressed}) => ({
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                backgroundColor: isDark
+                  ? palette.gray700
+                  : palette.steel200,
+                borderWidth: 1,
+                borderColor: isDark
+                  ? palette.gray500
+                  : palette.steel300,
+                justifyContent: 'center',
+                alignItems: 'center',
+                opacity: pressed ? 0.6 : metronomeVolume === 0 ? 0.3 : 1,
+              })}
+              disabled={metronomeVolume === 0}>
+              <Text
+                style={{
+                  ...typography.displayMd,
+                  color: colors.text,
+                }}
+                allowFontScaling={false}>
+                -
+              </Text>
+            </Pressable>
+            <Text
+              style={{
+                ...typography.displayLg,
+                color: colors.categoryText,
+                minWidth: 48,
+                textAlign: 'center',
+              }}
+              allowFontScaling={false}>
+              {metronomeVolume}
+            </Text>
+            <Pressable
+              onPress={handleVolumeIncrement}
+              style={({pressed}) => ({
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                backgroundColor: isDark
+                  ? palette.gray700
+                  : palette.steel200,
+                borderWidth: 1,
+                borderColor: isDark
+                  ? palette.gray500
+                  : palette.steel300,
+                justifyContent: 'center',
+                alignItems: 'center',
+                opacity: pressed ? 0.6 : metronomeVolume === 10 ? 0.3 : 1,
+              })}
+              disabled={metronomeVolume === 10}>
+              <Text
+                style={{
+                  ...typography.displayMd,
+                  color: colors.text,
+                }}
+                allowFontScaling={false}>
+                +
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Metronome Tone Picker */}
+          <Text
+            style={{
+              ...typography.label,
+              color: colors.textMuted,
+              marginBottom: 10,
+            }}>
+            METRONOME TONE
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}>
+            {METRONOME_TONE_OPTIONS.map(option => {
+              const isSelected = metronomeTone === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => handleToneSelect(option.value)}
                   style={({pressed}) =>
                     pressed
                       ? pillPressedStyle(isSelected)

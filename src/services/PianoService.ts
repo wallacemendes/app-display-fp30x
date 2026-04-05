@@ -11,6 +11,7 @@
 import type {Transport} from '../transport/types';
 import type {PianoEngine, Tone, NotificationEvent} from '../engine/types';
 import {usePerformanceStore} from '../store/performanceStore';
+import {getChordService} from '../hooks/useChord';
 import {encodeTempo} from '../engine/fp30x/sysex';
 
 /** Debounce timeout for rapid input (ms). */
@@ -93,10 +94,16 @@ export class PianoService {
         store.setLeftTone(leftTone ?? null);
         break;
       }
-      case 'noteOn':
-      case 'noteOff':
-        // Handled by ChordService (Phase 3)
+      case 'noteOn': {
+        const chordSvc = getChordService();
+        chordSvc.addNote(event.note);
         break;
+      }
+      case 'noteOff': {
+        const chordSvc = getChordService();
+        chordSvc.removeNote(event.note);
+        break;
+      }
       case 'unknown':
         // Logged but not acted on
         break;

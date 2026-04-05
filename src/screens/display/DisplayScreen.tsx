@@ -17,6 +17,7 @@ import {View, Text} from 'react-native';
 import {ConnectionIndicator} from '../../components/ConnectionIndicator';
 import {ToneSelector} from './ToneSelector';
 import {QuickToneSlots} from './QuickToneSlots';
+import {ChordDisplay} from './ChordDisplay';
 import {StatusBar} from './StatusBar';
 import {useConnection} from '../../hooks/useConnection';
 import {useThemeColors} from '../../hooks/useThemeColors';
@@ -80,7 +81,7 @@ export function DisplayScreen(): React.JSX.Element {
           paddingHorizontal: 8,
           paddingBottom: 12,
         }}>
-        {/* Left/center area: ToneSelector + QuickToneSlots */}
+        {/* Left area: ToneSelector + ChordDisplay + QuickToneSlots */}
         <View
           style={{
             flex: 3,
@@ -88,6 +89,7 @@ export function DisplayScreen(): React.JSX.Element {
           }}>
           <View style={{flex: 1, justifyContent: 'center'}}>
             <ToneSelector />
+            <ChordDisplay />
           </View>
           <QuickToneSlots />
         </View>

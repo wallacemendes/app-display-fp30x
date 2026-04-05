@@ -15,15 +15,7 @@ import {darkColors, lightColors} from '../theme/colors';
 import {useColorScheme} from 'react-native';
 import {DisplayScreen} from '../screens/display/DisplayScreen';
 import {PresetsScreen} from '../screens/presets/PresetsScreen';
-
-// Placeholder screen — replaced in Phase 4
-function PadsScreen() {
-  return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <Text className="text-white text-lg">PADS — Phase 4</Text>
-    </View>
-  );
-}
+import {PadsScreen} from '../screens/pads/PadsScreen';
 
 export type TabParamList = {
   Pads: undefined;
