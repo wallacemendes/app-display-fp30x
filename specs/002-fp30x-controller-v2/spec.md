@@ -22,6 +22,7 @@ This v2 spec replaces the original's phase structure, functional requirements, a
 - **Phase 2 -- Favorites, Presets & Quick Tones**: Persistent favorites (mixed SN + GM2), named presets with layered DT1 parameters (tone + volume + tempo + metronome), quick-tone slots on main display, auto-apply default preset on connect.
 - **Phase 3 -- Live Performance & Chord Detection**: Real-time chord tracker from Note On/Off, Split/Dual mode activation and tone assignment, keyboard transpose, key touch sensitivity control.
 - **Phase 4 -- Pads & Advanced Controls**: Assignable performance pads (macro buttons for quick parameter changes), metronome full control (beat, pattern, tone, volume), advanced settings panel.
+- **Phase 5 -- Import/Export**: Export and import presets as files for backup, sharing, and migration between devices. Further refinements TODO.
 
 ## Clarifications
 
@@ -29,9 +30,17 @@ This v2 spec replaces the original's phase structure, functional requirements, a
 
 - Q: What is the app's orientation? -> A: Landscape-only. The UI is designed as a hardware synthesizer display, not a standard mobile app.
 - Q: What is the navigation structure? -> A: Three top tabs: PADS, DISPLAY, PRESETS. No bottom tab bar. DISPLAY is the landing screen.
-- Q: How does tone selection work? -> A: Two-tier stepper: Category selector (+/- buttons cycling through tone categories) above a Tone selector (+/- buttons cycling within the current category). Not a grid. Not a scrollable list.
+- Q: How does tone selection work? -> A: Two-tier stepper with multiple interaction modes:
+  - **Category row**: +/- buttons cycle through categories. Tapping the category NAME opens a two-column picker modal (left column = categories, right column = tones of selected category). Selecting a category advances and selects its first tone.
+  - **Tone row**: +/- buttons cycle within the current category. Tapping the tone NAME opens a scrollable tone list for the current category. Long-pressing the tone name opens an options modal (add to favorites, set as default tone).
 - Q: What MIDI protocol is used? -> A: Roland DT1 SysEx exclusively for all parameter control. CC/PC is ignored by the piano over BLE.
 - Q: Can the app read the piano's state? -> A: Yes. RQ1 SysEx requests return current parameters. The piano also sends unsolicited DT1 notifications for physical control changes (volume, tone, tempo, metronome). The app operates as a bidirectional control surface.
+- Q: How do status bar items interact? -> A: Each status bar item is tappable:
+  - **Tempo (♩ = 108)**: tap opens a modal with options: +1, -1, +5, -5, +10, -10, and "Set tempo" (type a number directly).
+  - **Beat (4/4)**: tap opens a modal to pick beat (0/4 through 6/4) and rhythm pattern (Off + 7 subdivisions).
+  - **Metronome (M: OFF)**: tap toggles metronome on/off instantly.
+  - **Volume (🔊 100)**: tap opens a volume fader overlay for smooth adjustment.
+  - **BLE icon**: tap opens connection status showing device name and a disconnect option.
 - Q: Does the app show chords? -> A: Yes. The DISPLAY screen includes a real-time chord tracker that identifies chords from Note On/Off messages. Uses a held-notes set model (not time-window buffering).
 - Q: What about Split/Dual modes? -> A: All DT1 addresses mapped. Phase 3 feature. Single/Split/Dual at `01 00 02 00`, with per-voice tones and shift parameters confirmed.
 - Q: What about reverb/chorus CC? -> A: Does not work over BLE. Confirmed via testing. Removed from scope.
@@ -61,36 +70,75 @@ A pianist powers on their FP-30X and opens the app in landscape orientation. The
 
 #### User Story 2 - Browse and Select Tones (Priority: P1 -- Phase 1)
 
-The DISPLAY screen is the landing screen. On the left side, a two-tier tone selector with stepper buttons lets the user cycle through categories (top row: e.g. "CLASSIC PIANOS") and tones within that category (bottom row: e.g. "1. Concert Piano"). The category name appears in cyan on a recessed display area, and the tone name in orange. Pressing +/- cycles through available options, wrapping at the ends. Each tone change sends a DT1 SysEx to the piano at address `01 00 02 07`.
+The DISPLAY screen is the landing screen. On the left side, a two-tier tone selector provides multiple ways to find and select tones:
 
-**Why this priority**: Core value proposition. The piano loses its tone on power-off; the app makes selecting any of the 65 SuperNATURAL or 256 GM2 tones instant.
+**Category row** (top): Shows the current category name (e.g. "CLASSIC PIANOS") in cyan text on a recessed display. Three interaction modes:
+- **+/- buttons**: cycle to next/previous category, auto-selecting the first tone in the new category.
+- **Tap category name**: opens a two-column picker modal. Left column lists all categories; right column shows tones in the selected category. Tapping a tone selects it and closes the modal.
 
-**Independent Test**: Connect to the FP-30X, press + on the category selector to cycle to "E.PIANO", press + on the tone selector to choose "EP 1", and hear the piano change tone.
+**Tone row** (bottom): Shows the current tone (e.g. "1. Concert Piano") in orange text. Four interaction modes:
+- **+/- buttons**: cycle to next/previous tone within the current category, wrapping at ends.
+- **Tap tone name**: opens a tone picker modal (see below).
+- **Long-press tone name**: opens an options modal with: "Add to favorites" and "Set as default tone".
+- **Undo button** (↩): appears next to the tone name after a tone change. Tap to revert to the previous tone. Supports multiple undo levels (tone history stack) -- each tap goes one step back. The button disappears when there is no more history to undo.
+
+**Tone picker modal** (opened by tapping tone name): A two-column layout with search:
+- **Left column**: Two tabs/options — "Favorites" (shows saved favorite tones) and "Category" (shows tones from the current category). Tapping "Favorites" switches the right column to the favorites list. Tapping "Category" switches back to category tones.
+- **Right column**: Scrollable list of tones (either favorites or category tones depending on left selection). Tapping a tone selects it, sends DT1, and closes the modal.
+- **Search bar**: At the top of the modal. Supports two search modes:
+  - **Search by name**: typing "Piano" returns all tones containing "Piano" across ALL categories.
+  - **Search by number**: typing "10" returns tone #10 from every category that has one.
+  Search results replace the right column content. Clearing the search restores the previous view (favorites or category).
+
+Each tone selection sends a DT1 SysEx to the piano.
+
+**Why this priority**: Core value proposition. The piano loses its tone on power-off; the app makes selecting any of the 65 SuperNATURAL or 256 GM2 tones instant. Multiple interaction modes let the user choose between quick sequential cycling (+/-) and direct jump (list/picker).
+
+**Independent Test**: Connect to the FP-30X. Test all three modes: press + to cycle, tap the category name to open the picker, tap the tone name to open the list. Verify the piano changes tone in each case.
 
 **Acceptance Scenarios**:
 
 1. **Given** the app is connected, **When** the user presses + on the category selector, **Then** the display cycles to the next tone category and the tone selector resets to the first tone in that category.
-2. **Given** a category is selected, **When** the user presses + or - on the tone selector, **Then** the piano switches to the new tone within 200ms and the display updates the tone name.
-3. **Given** the user reaches the last tone in a category, **When** they press +, **Then** the selector wraps to the first tone in that category.
-4. **Given** the user is on the first category, **When** they press -, **Then** the selector wraps to the last category.
-5. **Given** the user changes the tone on the piano's physical tone button, **When** the DT1 notification is received, **Then** the category and tone selectors update to reflect the piano's new tone.
+2. **Given** a category is selected, **When** the user presses + or - on the tone selector, **Then** the piano switches to the new tone within 200ms and the display updates.
+3. **Given** the user taps the category name, **When** the two-column picker opens, **Then** the left column shows all categories and the right column shows tones for the currently highlighted category. Tapping a category on the left updates the right column. Tapping a tone on the right selects it, sends the DT1, and closes the picker.
+4. **Given** the user taps the tone name, **When** the tone picker opens, **Then** it shows a two-column layout with "Favorites" and "Category" options on the left, tones on the right, and a search bar at the top. The default view shows the current category's tones.
+5. **Given** the tone picker is open, **When** the user taps "Favorites" on the left, **Then** the right column switches to show all saved favorite tones.
+6. **Given** the tone picker is open, **When** the user types "Piano" in the search bar, **Then** the right column shows all tones containing "Piano" across all categories.
+7. **Given** the tone picker is open, **When** the user types "10" and searches by number, **Then** the right column shows tone #10 from every category that has one.
+8. **Given** the user long-presses the tone name, **When** the options modal opens, **Then** it offers "Add to favorites" and "Set as default tone".
+9. **Given** the user changed from Concert Piano to Strings, **When** the undo button (↩) appears next to the tone name and the user taps it, **Then** the piano reverts to Concert Piano and the undo button now points to the tone before that (or disappears if no more history).
+10. **Given** no tone changes have been made in the session, **Then** the undo button is not visible.
+6. **Given** the user reaches the last tone in a category, **When** they press +, **Then** the selector wraps to the first tone.
+7. **Given** the user changes the tone on the piano's physical tone button, **When** the DT1 notification is received, **Then** the category and tone selectors update to reflect the piano's new tone.
 
 ---
 
 #### User Story 3 - Live Status Bar (Priority: P1 -- Phase 1)
 
-The bottom bar of the DISPLAY screen shows the piano's live performance state: tempo (BPM), beat (time signature), metronome on/off, transpose value, and volume. These values are read from the piano on connect (via RQ1) and kept in sync via DT1 notifications whenever the pianist changes a physical control.
+The bottom bar of the DISPLAY screen shows the piano's live performance state and provides interactive controls for each parameter. All values are read from the piano on connect (via RQ1) and kept in sync via DT1 notifications.
 
-**Why this priority**: Without visible status, the user has no confirmation of what the piano is doing. The status bar closes the feedback loop for all physical control changes.
+**Status bar layout** (left to right):
+- **Tempo**: "♩ = 108" -- tap opens a tempo modal with +1/-1, +5/-5, +10/-10 buttons, and a "Set BPM" option to type a specific number.
+- **Beat**: "4/4" -- tap opens a modal to pick the beat (0/4, 2/4, 3/4, 4/4, 5/4, 6/4) and the rhythm pattern (Off + 7 subdivision options).
+- **Metronome**: "M: OFF" -- tap toggles metronome on/off instantly via DT1 toggle command. The display updates based on the piano's echo notification (showing real state, not assumed state).
+- **Volume**: "🔊 100" -- tap opens a volume fader overlay for smooth adjustment via DT1 volume writes.
 
-**Independent Test**: Connect to the piano, verify the status bar shows correct tempo/volume. Change tempo on the piano; verify the display updates. Toggle the metronome; verify M: OFF changes to M: ON.
+**BLE icon** (top-right): tap opens a connection info panel showing device name and a disconnect button.
+
+**Why this priority**: Without visible status, the user has no confirmation of what the piano is doing. The interactive status bar provides both feedback AND control -- the user can see and change parameters without leaving the DISPLAY screen.
+
+**Independent Test**: Connect to the piano, verify all status values match. Tap tempo to change it. Tap metronome to toggle. Tap volume to adjust. Change tempo on the piano's physical buttons; verify the display updates.
 
 **Acceptance Scenarios**:
 
-1. **Given** the app just connected, **When** initial state is loaded, **Then** the status bar shows the piano's current tempo (BPM), beat (e.g., 4/4), metronome state (ON/OFF), and volume (0-100).
-2. **Given** the app is connected, **When** the user changes the tempo on the piano, **Then** the BPM display updates within 100ms of the notification.
-3. **Given** the app is connected, **When** the user presses the physical metronome button, **Then** the M: ON/OFF indicator toggles.
-4. **Given** the app is connected, **When** the user turns the volume knob on the piano, **Then** the volume number in the status bar updates in real time.
+1. **Given** the app just connected, **When** initial state is loaded, **Then** the status bar shows the piano's current tempo (BPM), beat, metronome state (ON/OFF), and volume.
+2. **Given** the app is connected, **When** the user taps the tempo display, **Then** a modal opens with +1/-1, +5/-5, +10/-10 buttons and a "Set BPM" text input option.
+3. **Given** the tempo modal is open, **When** the user taps "+5", **Then** the piano's tempo increases by 5 BPM, the modal and status bar update.
+4. **Given** the app is connected, **When** the user taps the beat display (4/4), **Then** a modal opens showing beat options (0/4 through 6/4) and pattern options (Off + 7 rhythms). Selecting a beat or pattern sends the corresponding DT1 and closes the modal.
+5. **Given** the app is connected, **When** the user taps the metronome indicator, **Then** the metronome toggles and the display updates based on the piano's echo (real state).
+5. **Given** the app is connected, **When** the user taps the volume display, **Then** a fader overlay opens. Dragging the fader sends DT1 volume commands and the piano's volume changes in real time.
+6. **Given** the user taps the BLE icon, **When** the connection panel opens, **Then** it shows the device name (e.g., "FP-30X MIDI") and a "Disconnect" button.
+7. **Given** the user changes any parameter on the piano's physical controls, **Then** the status bar updates within 200ms via DT1 notification.
 
 ---
 
@@ -222,6 +270,22 @@ The user controls all metronome parameters: toggle on/off, tempo, beat/time sign
 
 ---
 
+### Phase 5 -- Import/Export
+
+#### User Story 12 - Export and Import Presets (Priority: P1 -- Phase 5)
+
+A user wants to back up their presets, share them with another pianist, or migrate to a new device. They can export all presets (or selected presets) to a file and import presets from a file. The file format preserves all DT1 parameter values.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user has saved presets, **When** they choose "Export", **Then** a file is generated containing all preset data and shared via the system share sheet.
+2. **Given** the user receives a preset file, **When** they open it with the app, **Then** the presets are imported and available alongside existing ones.
+3. **Given** an imported preset has the same name as an existing one, **When** importing, **Then** the user is prompted to rename, replace, or skip.
+
+*Further refinements TODO.*
+
+---
+
 ### Edge Cases
 
 - What happens when BLE disconnects mid-performance? The app shows a disconnected state (red BLE icon), stops updating live values, and attempts automatic reconnection. No commands are silently lost. The user is notified.
@@ -247,9 +311,12 @@ The user controls all metronome parameters: toggle on/off, tempo, beat/time sign
 - **FR-007**: System MUST wrap all DT1 SysEx messages in BLE MIDI packet framing (header + timestamp + SysEx body + timestamp + end byte) before writing to the BLE characteristic.
 - **FR-008**: System MUST subscribe to BLE MIDI notifications on the same characteristic used for writes, and parse incoming DT1 notifications to keep the UI in sync with physical piano controls.
 - **FR-009**: System MUST read the piano's current state on connect by sending two RQ1 requests: (a) performance block for tone and volume, (b) status block for tempo and metronome state.
-- **FR-010**: System MUST display in the status bar: tempo (BPM), beat (time signature), metronome state (ON/OFF), and volume.
+- **FR-010**: System MUST display an interactive status bar with: tempo (tap to adjust via +/-1/5/10 or type BPM), beat (tap to pick beat + pattern), metronome state (tap to toggle on/off), and volume (tap to open fader).
 - **FR-011**: The app MUST operate in landscape orientation exclusively. The UI aesthetic MUST be a dark hardware synthesizer display (dark background, tactile button appearance, glowing display-style text).
-- **FR-012**: System MUST present tones via a two-tier stepper interface: a category selector (+/- buttons) above a tone-within-category selector (+/- buttons). Not a grid, not a scrollable list.
+- **FR-012**: System MUST present tones via a two-tier selector with three interaction modes each: (a) +/- stepper buttons for sequential cycling, (b) tap category/tone name to open a picker/list for direct selection, (c) long-press tone name for options (add to favorites, set as default tone).
+- **FR-012a**: Tapping the category name MUST open a two-column picker: categories on the left, tones of the selected category on the right. Selecting a tone from the picker applies it immediately.
+- **FR-012b**: Tapping the tone name MUST open a tone picker modal with: (1) left column toggling between "Favorites" and "Category" views, (2) right column showing the corresponding tone list, (3) a search bar supporting search by name (cross-category text match) and by number (returns tone N from every category). Long-pressing MUST open an options modal (add to favorites, set as default tone).
+- **FR-012c**: Tapping the BLE icon MUST show connection details (device name) and a disconnect option.
 - **FR-013**: System MUST visually highlight the currently active tone and category.
 - **FR-014**: System MUST prevent the device screen from turning off while the app is in the foreground (wake lock).
 - **FR-015**: System MUST persist the last-used tone category locally so it can be restored on next launch.
@@ -276,6 +343,11 @@ The user controls all metronome parameters: toggle on/off, tempo, beat/time sign
 
 - **FR-028**: System MUST provide assignable performance pads (PADS tab) that can each trigger a configured command or command sequence.
 - **FR-029**: System MUST support full metronome control: toggle on/off, tempo, beat (6 options), pattern (8 options), volume (0-10), and tone (4 options).
+
+### Functional Requirements -- Phase 5 (Import/Export)
+
+- **FR-030**: System MUST allow exporting presets to a shareable file format containing all DT1 parameter values.
+- **FR-031**: System MUST allow importing presets from a file, with conflict resolution (rename/replace/skip) for duplicate names.
 
 ### Key Entities
 
