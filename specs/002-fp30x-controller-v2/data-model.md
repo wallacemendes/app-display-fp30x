@@ -147,7 +147,7 @@ interface PerformanceState {
 
 ### Preset
 
-A saved batch of DT1 commands representing a complete piano configuration.
+A saved batch of DT1 commands plus app-local state representing a complete performance setup.
 
 ```typescript
 interface Preset {
@@ -182,6 +182,11 @@ interface Preset {
   metronomeBeat?: number;
   /** Metronome pattern */
   metronomePattern?: number;
+
+  // — App-local state (not DT1) —
+
+  /** Quick-tone slot assignments (3 slots). Each is a tone ID or null. */
+  quickToneSlots: [string | null, string | null, string | null];
 
   // — Phase 3+ parameters (nullable) —
 

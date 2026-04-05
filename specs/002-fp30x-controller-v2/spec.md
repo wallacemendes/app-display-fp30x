@@ -45,6 +45,7 @@ This v2 spec replaces the original's phase structure, functional requirements, a
 - Q: What about Split/Dual modes? -> A: All DT1 addresses mapped. Phase 3 feature. Single/Split/Dual at `01 00 02 00`, with per-voice tones and shift parameters confirmed.
 - Q: What about reverb/chorus CC? -> A: Does not work over BLE. Confirmed via testing. Removed from scope.
 - Q: Do presets use DT1? -> A: Yes. A preset is a batch of DT1 writes. Tested: 3 DT1 writes complete in ~56ms, all applied, no delays needed.
+- Q: Should presets save the 3 quick-tone slot assignments? -> A: Yes. A preset captures the complete performance setup including the 3 quick-tone slot assignments. When a preset is applied, the quick-tone slots are restored in the app UI (these are app-local, not DT1 commands to the piano).
 
 ## User Scenarios & Testing
 
@@ -179,7 +180,7 @@ On the right side of the DISPLAY screen, 3 quick-tone buttons are always visible
 
 #### User Story 6 - Presets (Saved Performance States) (Priority: P1 -- Phase 2)
 
-The FP-30X resets all settings when powered off. A pianist saves their complete setup (tone + volume + tempo + metronome settings) as a named Preset. Applying a preset sends a batch of DT1 commands (~56ms total). One preset can be marked as "Default" -- which auto-applies when the app first connects after launch. Reconnection after a drop does NOT re-apply the default (to avoid disrupting live performance).
+The FP-30X resets all settings when powered off. A pianist saves their complete setup (tone + volume + tempo + metronome settings + 3 quick-tone slot assignments) as a named Preset. Applying a preset sends a batch of DT1 commands (~56ms total). One preset can be marked as "Default" -- which auto-applies when the app first connects after launch. Reconnection after a drop does NOT re-apply the default (to avoid disrupting live performance).
 
 **Why this priority**: The app's strongest differentiator. Presets solve the piano's volatile memory problem completely.
 
@@ -187,7 +188,7 @@ The FP-30X resets all settings when powered off. A pianist saves their complete 
 
 **Acceptance Scenarios**:
 
-1. **Given** the user has configured settings on the piano, **When** they save a new preset with a name, **Then** the preset captures current tone, volume, tempo, and metronome state.
+1. **Given** the user has configured settings on the piano, **When** they save a new preset with a name, **Then** the preset captures current tone, volume, tempo, metronome state, and the 3 quick-tone slot assignments.
 2. **Given** a saved preset exists, **When** the user taps "Apply", **Then** all DT1 commands are sent as a batch and the piano reflects the preset within 500ms.
 3. **Given** a preset is marked as "Default", **When** the app launches and connects for the first time, **Then** the default preset auto-applies within 2 seconds of connection.
 4. **Given** a connection drops and reconnects during a session, **When** reconnection succeeds, **Then** the default preset is NOT re-applied.
@@ -325,7 +326,7 @@ A user wants to back up their presets, share them with another pianist, or migra
 ### Functional Requirements -- Phase 2 (Favorites, Presets & Quick Tones)
 
 - **FR-017**: System MUST persist favorite tones locally across app sessions, supporting both SN and GM2 tones in the same list.
-- **FR-018**: System MUST allow users to save named Presets that capture tone, volume, tempo, and metronome state as a batch of DT1 commands.
+- **FR-018**: System MUST allow users to save named Presets that capture tone, volume, tempo, metronome state, and the 3 quick-tone slot assignments. Piano parameters are applied as a batch of DT1 commands; quick-tone slots are restored in the app UI.
 - **FR-019**: System MUST apply a preset by sending all its DT1 commands sequentially (no inter-write delay needed).
 - **FR-020**: System MUST support a "Default Preset" that auto-applies on first BLE connection after app launch, but NOT on reconnection after a drop.
 - **FR-021**: System MUST provide 3 quick-tone slots on the DISPLAY screen that apply a favorite tone with one tap.
@@ -353,7 +354,7 @@ A user wants to back up their presets, share them with another pianist, or migra
 
 - **Tone**: A selectable piano sound. Attributes: name, category (Piano/E.Piano/Organ/Strings/Pad/Synth/Other/Drums/GM2), DT1 category byte (0-8), DT1 index high byte, DT1 index low byte, isFavorite flag.
 - **Device Connection**: A BLE MIDI connection session. Attributes: device ID, device name, connection status (idle/scanning/connecting/connected/disconnected), MIDI characteristic UUID (discovered dynamically), isFirstConnectionThisSession flag.
-- **Preset**: A saved batch of DT1 commands. Attributes: id, name, created timestamp, isDefault flag, tone (DT1 bytes), volume (0-127), tempo (BPM), metronome state, voice mode and parameters (Phase 3+: split/dual settings). Applying a preset sends all DT1 writes sequentially.
+- **Preset**: A saved batch of DT1 commands plus app-local state. Attributes: id, name, created timestamp, isDefault flag, tone (DT1 bytes), volume (0-127), tempo (BPM), metronome state, quickToneSlots (3 tone references), voice mode and parameters (Phase 3+: split/dual settings). Applying a preset sends DT1 writes sequentially and restores quick-tone slots in the app UI.
 - **Performance State**: The app's internal mirror of the piano's current state, kept in sync via both outbound DT1 writes and inbound DT1 notifications. Attributes: active tone, volume, tempo, metronome state, beat, voice mode, keyboard transpose. Updated by: user actions in app, DT1 echoes from piano, RQ1 responses on connect.
 - **Held Notes**: A transient set of currently pressed MIDI note numbers, updated by Note On (add) and Note Off (remove) notifications. Not persisted. Used by the chord detection engine.
 
