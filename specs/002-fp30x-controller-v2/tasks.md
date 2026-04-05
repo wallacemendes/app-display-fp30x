@@ -19,11 +19,11 @@
 
 **Purpose**: Project restructure from v1 feature-based to v2 layered architecture. Install new dependencies.
 
-- [ ] T001 Create v2 directory structure: `src/engine/`, `src/engine/fp30x/`, `src/transport/`, `src/transport/ble/`, `src/services/`, `src/screens/display/`, `src/screens/presets/`, `src/screens/pads/`, `src/components/modals/`, `src/hooks/`, `__tests__/engine/fp30x/`, `__tests__/transport/ble/`, `__tests__/services/`, `__tests__/store/`
-- [ ] T002 [P] Install new dependencies: `@react-navigation/material-top-tabs`, `react-native-pager-view`, `nativewind`, `tailwindcss`, `react-native-reusables`
-- [ ] T003 [P] Configure NativeWind: `tailwind.config.js`, `babel.config.js` plugin, `global.css`, `metro.config.js` adjustments
-- [ ] T004 [P] Bundle Orbitron font: download Regular + Bold weights, add to `ios/` fonts directory, configure `react-native.config.js` for custom font linking
-- [ ] T005 [P] Configure landscape-only orientation in `ios/Info.plist` (remove portrait orientations)
+- [x] T001 Create v2 directory structure: `src/engine/`, `src/engine/fp30x/`, `src/transport/`, `src/transport/ble/`, `src/services/`, `src/screens/display/`, `src/screens/presets/`, `src/screens/pads/`, `src/components/modals/`, `src/hooks/`, `__tests__/engine/fp30x/`, `__tests__/transport/ble/`, `__tests__/services/`, `__tests__/store/`
+- [x] T002 [P] Install new dependencies: `@react-navigation/material-top-tabs`, `react-native-pager-view`, `nativewind`, `tailwindcss`, `react-native-reusables`
+- [x] T003 [P] Configure NativeWind: `tailwind.config.js`, `babel.config.js` plugin, `global.css`, `metro.config.js` adjustments
+- [x] T004 [P] Bundle Orbitron font: download Regular + Bold weights, add to `ios/` fonts directory, configure `react-native.config.js` for custom font linking
+- [x] T005 [P] Configure landscape-only orientation in `ios/Info.plist` (remove portrait orientations)
 
 ---
 
@@ -35,42 +35,42 @@
 
 ### Engine Core
 
-- [ ] T006 [P] Implement engine types interface in `src/engine/types.ts` — PianoEngine, ToneCatalog, ToneCategory, Tone, NotificationEvent, DeviceIdentity types per contracts/piano-engine.ts
-- [ ] T007 [P] Implement FP-30X constants in `src/engine/fp30x/constants.ts` — model ID (`00 00 00 28`), device ID (`0x10`), Roland manufacturer ID (`0x41`), BLE MIDI service/characteristic UUIDs
-- [ ] T008 [P] Implement DT1 address map in `src/engine/fp30x/addresses.ts` — all known DT1 addresses from discovery doc Section 6 (tone, volume, tempo, metronome, voice mode, transpose, key touch, split, balance)
-- [ ] T009 Implement SysEx builders in `src/engine/fp30x/sysex.ts` — `buildDT1()`, `buildRQ1()`, `rolandChecksum()`, `buildIdentityRequest()`. All byte construction per discovery doc Section 4 + Appendix A
-- [ ] T010 [P] Write SysEx builder tests in `__tests__/engine/fp30x/sysex.test.ts` — byte-level assertions for DT1 tone change (Concert Piano = `F0 41 10 00 00 00 28 12 01 00 02 07 00 00 00 76 F7`), RQ1, checksum, tempo encoding (2-byte 7-bit), volume, metronome toggle
-- [ ] T011 Implement tone catalog in `src/engine/fp30x/tones.ts` — complete SN (65 tones, 8 categories) + GM2 (256 tones) with DT1 category/index format per discovery doc Sections 7-8. ToneCatalog with findByDT1(), findById(), searchByName(), getToneAtPosition()
-- [ ] T012 [P] Write tone catalog tests in `__tests__/engine/fp30x/tones.test.ts` — verify 321 total tones, category counts (Piano=12, E.Piano=7, ..., GM2=256), findByDT1 for Concert Piano (0,0,0), GM2 Organ 1 (8,0,36), search by name "Piano", boundary tones per category
-- [ ] T013 Implement notification parser in `src/engine/fp30x/parser.ts` — parse DT1 echoes (volume, tone, tempo, metronome state/beat/pattern/volume/tone, voice mode, transpose, key touch), Note On/Off, handle running status, return typed NotificationEvent
-- [ ] T014 [P] Write parser tests in `__tests__/engine/fp30x/parser.test.ts` — DT1 volume echo (`01 00 02 13 34` → volume 52), tone echo, tempo echo (2-byte decode), Note On (`90 3C 64` → noteOn C4 vel 100), Note Off, metronome state (`01 00 01 0F 01` → on), unknown address → unknown event
-- [ ] T015 Implement FP30XEngine in `src/engine/fp30x/FP30XEngine.ts` — implements PianoEngine interface, wires sysex builders + parser + tone catalog. Methods: buildToneChange, buildVolumeChange, buildTempoChange, buildMetronomeToggle, buildMetronomeParam, buildInitialStateRequest, parseNotification, parseStateResponse, supportsDevice
-- [ ] T016 Implement engine registry in `src/engine/registry.ts` — maps DeviceIdentity to PianoEngine instance. Register FP30XEngine for model ID 0x28.
+- [x] T006 [P] Implement engine types interface in `src/engine/types.ts` — PianoEngine, ToneCatalog, ToneCategory, Tone, NotificationEvent, DeviceIdentity types per contracts/piano-engine.ts
+- [x] T007 [P] Implement FP-30X constants in `src/engine/fp30x/constants.ts` — model ID (`00 00 00 28`), device ID (`0x10`), Roland manufacturer ID (`0x41`), BLE MIDI service/characteristic UUIDs
+- [x] T008 [P] Implement DT1 address map in `src/engine/fp30x/addresses.ts` — all known DT1 addresses from discovery doc Section 6 (tone, volume, tempo, metronome, voice mode, transpose, key touch, split, balance)
+- [x] T009 Implement SysEx builders in `src/engine/fp30x/sysex.ts` — `buildDT1()`, `buildRQ1()`, `rolandChecksum()`, `buildIdentityRequest()`. All byte construction per discovery doc Section 4 + Appendix A
+- [x] T010 [P] Write SysEx builder tests in `__tests__/engine/fp30x/sysex.test.ts` — byte-level assertions for DT1 tone change (Concert Piano = `F0 41 10 00 00 00 28 12 01 00 02 07 00 00 00 76 F7`), RQ1, checksum, tempo encoding (2-byte 7-bit), volume, metronome toggle
+- [x] T011 Implement tone catalog in `src/engine/fp30x/tones.ts` — complete SN (65 tones, 8 categories) + GM2 (256 tones) with DT1 category/index format per discovery doc Sections 7-8. ToneCatalog with findByDT1(), findById(), searchByName(), getToneAtPosition()
+- [x] T012 [P] Write tone catalog tests in `__tests__/engine/fp30x/tones.test.ts` — verify 321 total tones, category counts (Piano=12, E.Piano=7, ..., GM2=256), findByDT1 for Concert Piano (0,0,0), GM2 Organ 1 (8,0,36), search by name "Piano", boundary tones per category
+- [x] T013 Implement notification parser in `src/engine/fp30x/parser.ts` — parse DT1 echoes (volume, tone, tempo, metronome state/beat/pattern/volume/tone, voice mode, transpose, key touch), Note On/Off, handle running status, return typed NotificationEvent
+- [x] T014 [P] Write parser tests in `__tests__/engine/fp30x/parser.test.ts` — DT1 volume echo (`01 00 02 13 34` → volume 52), tone echo, tempo echo (2-byte decode), Note On (`90 3C 64` → noteOn C4 vel 100), Note Off, metronome state (`01 00 01 0F 01` → on), unknown address → unknown event
+- [x] T015 Implement FP30XEngine in `src/engine/fp30x/FP30XEngine.ts` — implements PianoEngine interface, wires sysex builders + parser + tone catalog. Methods: buildToneChange, buildVolumeChange, buildTempoChange, buildMetronomeToggle, buildMetronomeParam, buildInitialStateRequest, parseNotification, parseStateResponse, supportsDevice
+- [x] T016 Implement engine registry in `src/engine/registry.ts` — maps DeviceIdentity to PianoEngine instance. Register FP30XEngine for model ID 0x28.
 
 ### Transport Core
 
-- [ ] T017 [P] Implement transport types in `src/transport/types.ts` — Transport interface, DiscoveredDevice, TransportStatus, NotificationListener, Unsubscribe per contracts/transport.ts
-- [ ] T018 Implement BLE MIDI framing in `src/transport/ble/framing.ts` — `wrapInBleMidiPacket()`, `wrapMultipleInBleMidiPacket()`, `stripBleFraming()` (new: extract raw MIDI from notification bytes, skip header/timestamps), `base64ToBytes()`, `bytesToBase64()`
-- [ ] T019 [P] Write framing tests in `__tests__/transport/ble/framing.test.ts` — wrap SysEx with F7 timestamp, wrap standard message, strip BLE framing from notification bytes (verify header/timestamp removal), roundtrip wrap→strip
+- [x] T017 [P] Implement transport types in `src/transport/types.ts` — Transport interface, DiscoveredDevice, TransportStatus, NotificationListener, Unsubscribe per contracts/transport.ts
+- [x] T018 Implement BLE MIDI framing in `src/transport/ble/framing.ts` — `wrapInBleMidiPacket()`, `wrapMultipleInBleMidiPacket()`, `stripBleFraming()` (new: extract raw MIDI from notification bytes, skip header/timestamps), `base64ToBytes()`, `bytesToBase64()`
+- [x] T019 [P] Write framing tests in `__tests__/transport/ble/framing.test.ts` — wrap SysEx with F7 timestamp, wrap standard message, strip BLE framing from notification bytes (verify header/timestamp removal), roundtrip wrap→strip
 
 ### Stores
 
-- [ ] T020 [P] Implement MMKV storage adapter in `src/store/storage.ts` (keep existing or rewrite for NativeWind compatibility)
-- [ ] T021 [P] Implement connectionStore in `src/store/connectionStore.ts` — DeviceConnection state per data-model.md. Persist deviceId/deviceName/lastConnectedAt. Runtime: status, isFirstConnectionThisSession
-- [ ] T022 [P] Implement performanceStore in `src/store/performanceStore.ts` — PerformanceState per data-model.md. Runtime-only (not persisted). Fields: activeTone, toneHistory (stack), pendingTone, volume, tempo, metronomeOn, metronomeBeat, metronomePattern, metronomeVolume, metronomeTone. Actions: setActiveTone (push to history), undo (pop history, return previous), setVolume, setTempo, etc.
-- [ ] T023 [P] Implement appSettingsStore in `src/store/appSettingsStore.ts` — theme (system/light/dark), lastCategoryIndex, defaultPresetId. Persisted via MMKV.
-- [ ] T024 [P] Write store tests in `__tests__/store/performanceStore.test.ts` — tone history push/undo, undo with empty history, setActiveTone clears pendingTone, volume/tempo set
+- [x] T020 [P] Implement MMKV storage adapter in `src/store/storage.ts` (keep existing or rewrite for NativeWind compatibility)
+- [x] T021 [P] Implement connectionStore in `src/store/connectionStore.ts` — DeviceConnection state per data-model.md. Persist deviceId/deviceName/lastConnectedAt. Runtime: status, isFirstConnectionThisSession
+- [x] T022 [P] Implement performanceStore in `src/store/performanceStore.ts` — PerformanceState per data-model.md. Runtime-only (not persisted). Fields: activeTone, toneHistory (stack), pendingTone, volume, tempo, metronomeOn, metronomeBeat, metronomePattern, metronomeVolume, metronomeTone. Actions: setActiveTone (push to history), undo (pop history, return previous), setVolume, setTempo, etc.
+- [x] T023 [P] Implement appSettingsStore in `src/store/appSettingsStore.ts` — theme (system/light/dark), lastCategoryIndex, defaultPresetId. Persisted via MMKV.
+- [x] T024 [P] Write store tests in `__tests__/store/performanceStore.test.ts` — tone history push/undo, undo with empty history, setActiveTone clears pendingTone, volume/tempo set
 
 ### Theme
 
-- [ ] T025 [P] Implement color tokens in `src/theme/colors.ts` — steel-grey light mode palette, absolute black dark mode palette, WCAG AA validated accent colors (cyan for category, orange for tone name, green/red/grey for BLE status)
-- [ ] T026 [P] Implement typography in `src/theme/typography.ts` — Orbitron font family config for LCD displays (BPM, time sig, tone names), Inter/system font for body/labels. NativeWind custom font class mappings
-- [ ] T027 [P] Implement spacing tokens in `src/theme/spacing.ts` — landscape-optimized spacing scale
+- [x] T025 [P] Implement color tokens in `src/theme/colors.ts` — steel-grey light mode palette, absolute black dark mode palette, WCAG AA validated accent colors (cyan for category, orange for tone name, green/red/grey for BLE status)
+- [x] T026 [P] Implement typography in `src/theme/typography.ts` — Orbitron font family config for LCD displays (BPM, time sig, tone names), Inter/system font for body/labels. NativeWind custom font class mappings
+- [x] T027 [P] Implement spacing tokens in `src/theme/spacing.ts` — landscape-optimized spacing scale
 
 ### App Shell
 
-- [ ] T028 Implement TabNavigator in `src/app/TabNavigator.tsx` — `@react-navigation/material-top-tabs` with 3 tabs (PADS | DISPLAY | PRESETS). DISPLAY as initial route. Custom tabBar styled as hardware segment buttons with NativeWind. Landscape-optimized.
-- [ ] T029 Update App.tsx in `src/app/App.tsx` — NativeWind provider, navigation container, theme provider (system-adaptive with manual override from appSettingsStore), wake lock (`react-native-keep-awake`)
+- [x] T028 Implement TabNavigator in `src/app/TabNavigator.tsx` — `@react-navigation/material-top-tabs` with 3 tabs (PADS | DISPLAY | PRESETS). DISPLAY as initial route. Custom tabBar styled as hardware segment buttons with NativeWind. Landscape-optimized.
+- [x] T029 Update App.tsx in `src/app/App.tsx` — NativeWind provider, navigation container, theme provider (system-adaptive with manual override from appSettingsStore), wake lock (`react-native-keep-awake`)
 
 **Checkpoint**: Foundation ready — engine can build/parse DT1, transport can frame BLE packets, stores are wired, theme configured, tab shell renders. User story implementation can begin.
 
@@ -84,17 +84,17 @@
 
 ### Tests
 
-- [ ] T030 [P] [US1] Write BLE transport mock + ConnectionService tests in `__tests__/services/ConnectionService.test.ts` — scan timeout, connect flow, disconnect cleanup, auto-reconnect logic
+- [x] T030 [P] [US1] Write BLE transport mock + ConnectionService tests in `__tests__/services/ConnectionService.test.ts` — scan timeout, connect flow, disconnect cleanup, auto-reconnect logic
 
 ### Implementation
 
-- [ ] T031 [US1] Implement BLE scanner in `src/transport/ble/scanner.ts` — scan for BLE MIDI service UUID, filter by device name, scan timeout (10s), stop on discovery
-- [ ] T032 [US1] Implement BleTransport in `src/transport/ble/BleTransport.ts` — implements Transport interface. scan(), connect() (discover services + verify MIDI char), disconnect(), send() (wrap in BLE framing + writeWithoutResponse), subscribe() (monitorCharacteristicForDevice + strip framing + dispatch to listeners), destroy()
-- [ ] T033 [US1] Implement ConnectionService in `src/services/ConnectionService.ts` — orchestrates: scan → connect → send identity request → select engine from registry → subscribe to notifications → send RQ1 initial state requests → parse responses → populate stores. Auto-reconnect on disconnect (max 5 retries, 2s delay). Track isFirstConnectionThisSession.
-- [ ] T034 [US1] Implement PianoService core in `src/services/PianoService.ts` — setEngine(), handleNotification() (routes parsed events to stores), changeTone() (build DT1 via engine + send via transport + debounce), changeVolume(), changeTempo(), toggleMetronome(). Debounce rapid input (only last selection sent).
-- [ ] T035 [US1] Implement useConnection hook in `src/hooks/useConnection.ts` — exposes connectionStore state + scan/connect/disconnect actions from ConnectionService
-- [ ] T036 [US1] Implement ConnectionIndicator in `src/components/ConnectionIndicator.tsx` — BLE icon (green=connected, red=disconnected, grey=idle). Tap opens connection info panel (device name + disconnect button). NativeWind styled.
-- [ ] T037 [US1] Wire connection flow into DisplayScreen in `src/screens/display/DisplayScreen.tsx` — basic screen shell with ConnectionIndicator in top-right. Auto-scan on mount if previously paired device exists.
+- [x] T031 [US1] Implement BLE scanner in `src/transport/ble/scanner.ts` — scan for BLE MIDI service UUID, filter by device name, scan timeout (10s), stop on discovery
+- [x] T032 [US1] Implement BleTransport in `src/transport/ble/BleTransport.ts` — implements Transport interface. scan(), connect() (discover services + verify MIDI char), disconnect(), send() (wrap in BLE framing + writeWithoutResponse), subscribe() (monitorCharacteristicForDevice + strip framing + dispatch to listeners), destroy()
+- [x] T033 [US1] Implement ConnectionService in `src/services/ConnectionService.ts` — orchestrates: scan → connect → send identity request → select engine from registry → subscribe to notifications → send RQ1 initial state requests → parse responses → populate stores. Auto-reconnect on disconnect (max 5 retries, 2s delay). Track isFirstConnectionThisSession.
+- [x] T034 [US1] Implement PianoService core in `src/services/PianoService.ts` — setEngine(), handleNotification() (routes parsed events to stores), changeTone() (build DT1 via engine + send via transport + debounce), changeVolume(), changeTempo(), toggleMetronome(). Debounce rapid input (only last selection sent).
+- [x] T035 [US1] Implement useConnection hook in `src/hooks/useConnection.ts` — exposes connectionStore state + scan/connect/disconnect actions from ConnectionService
+- [x] T036 [US1] Implement ConnectionIndicator in `src/components/ConnectionIndicator.tsx` — BLE icon (green=connected, red=disconnected, grey=idle). Tap opens connection info panel (device name + disconnect button). NativeWind styled.
+- [x] T037 [US1] Wire connection flow into DisplayScreen in `src/screens/display/DisplayScreen.tsx` — basic screen shell with ConnectionIndicator in top-right. Auto-scan on mount if previously paired device exists.
 
 **Checkpoint**: App connects to FP-30X, reads initial state, stays in sync via notifications. BLE icon shows status.
 
@@ -108,13 +108,13 @@
 
 ### Implementation
 
-- [ ] T038 [US2] Implement useTones hook in `src/hooks/useTones.ts` — exposes engine tone catalog, current category/tone from performanceStore, nextTone(), prevTone(), nextCategory(), prevCategory(), selectTone() (calls PianoService.changeTone + pushes history), undo(), searchByName(), searchByNumber()
-- [ ] T039 [US2] Implement StepperControl in `src/components/StepperControl.tsx` — reusable +/- button pair with NativeWind styling (hardware button aesthetic). Accepts onIncrement, onDecrement, label display area (tappable + long-pressable)
-- [ ] T040 [US2] Implement ToneSelector in `src/screens/display/ToneSelector.tsx` — two-tier: category row (cyan text, +/- stepper, tap name → CategoryPickerModal) + tone row (orange text, +/- stepper, tap name → TonePickerModal, long-press → options modal). Undo button (↩) visible when toneHistory.length > 0
-- [ ] T041 [US2] Implement CategoryPickerModal in `src/components/modals/CategoryPickerModal.tsx` — two-column layout: left = all categories, right = tones of selected category. Tap tone → select + close. NativeWind + RN Reusables modal pattern.
-- [ ] T042 [US2] Implement TonePickerModal in `src/components/modals/TonePickerModal.tsx` — two-column: left toggles "Favorites"/"Category", right shows corresponding tone list. Search bar at top (by name or by number). Tap tone → select + send DT1 + close.
-- [ ] T043 [US2] Implement tone options modal (inline or separate component) — long-press tone name opens: "Add to favorites", "Set as default tone". Uses haptic feedback.
-- [ ] T044 [US2] Integrate ToneSelector into DisplayScreen — place on left side of landscape layout. Wire to useTones hook. Verify tone changes send DT1 and piano responds.
+- [x] T038 [US2] Implement useTones hook in `src/hooks/useTones.ts` — exposes engine tone catalog, current category/tone from performanceStore, nextTone(), prevTone(), nextCategory(), prevCategory(), selectTone() (calls PianoService.changeTone + pushes history), undo(), searchByName(), searchByNumber()
+- [x] T039 [US2] Implement StepperControl in `src/components/StepperControl.tsx` — reusable +/- button pair with NativeWind styling (hardware button aesthetic). Accepts onIncrement, onDecrement, label display area (tappable + long-pressable)
+- [x] T040 [US2] Implement ToneSelector in `src/screens/display/ToneSelector.tsx` — two-tier: category row (cyan text, +/- stepper, tap name → CategoryPickerModal) + tone row (orange text, +/- stepper, tap name → TonePickerModal, long-press → options modal). Undo button (↩) visible when toneHistory.length > 0
+- [x] T041 [US2] Implement CategoryPickerModal in `src/components/modals/CategoryPickerModal.tsx` — two-column layout: left = all categories, right = tones of selected category. Tap tone → select + close. NativeWind + RN Reusables modal pattern.
+- [x] T042 [US2] Implement TonePickerModal in `src/components/modals/TonePickerModal.tsx` — two-column: left toggles "Favorites"/"Category", right shows corresponding tone list. Search bar at top (by name or by number). Tap tone → select + send DT1 + close.
+- [x] T043 [US2] Implement tone options modal (inline or separate component) — long-press tone name opens: "Add to favorites", "Set as default tone". Uses haptic feedback.
+- [x] T044 [US2] Integrate ToneSelector into DisplayScreen — place on left side of landscape layout. Wire to useTones hook. Verify tone changes send DT1 and piano responds.
 
 **Checkpoint**: Full tone browsing with 3 interaction modes. Undo works. Piano changes tone on every selection.
 

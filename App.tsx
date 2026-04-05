@@ -1,11 +1,13 @@
 /**
  * FP-30X Controller — App Root.
  *
- * T011: Integrates TabNavigator.
- * T015: Activates react-native-keep-awake to prevent screen dimming during performance.
+ * T029: NativeWind provider, navigation container, theme provider,
+ * wake lock (react-native-keep-awake).
  *
- * Constitution III: System-Adaptive High-Contrast UI.
+ * Constitution III: Landscape Hardware-Synth UI.
  */
+
+import './global.css';
 
 import React from 'react';
 import {StatusBar, useColorScheme} from 'react-native';
@@ -13,16 +15,25 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {NavigationContainer} from '@react-navigation/native';
 import {useKeepAwake} from 'react-native-keep-awake';
 import {TabNavigator} from './src/app/TabNavigator';
+import {useAppSettingsStore} from './src/store/appSettingsStore';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const systemScheme = useColorScheme();
+  const themePreference = useAppSettingsStore(s => s.themePreference);
+  const isDark =
+    themePreference === 'dark' ||
+    (themePreference === 'system' && systemScheme === 'dark');
 
-  // T015: Prevent screen dimming — critical for live performance use
+  // Prevent screen dimming — critical for live performance use
   useKeepAwake();
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
       <NavigationContainer>
         <TabNavigator />
       </NavigationContainer>

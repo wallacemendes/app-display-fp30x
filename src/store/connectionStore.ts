@@ -1,11 +1,13 @@
 /**
  * Connection Zustand Store.
  *
- * T018: Manages BLE MIDI connection state with the FP-30X.
+ * T021: Manages BLE MIDI connection state with the FP-30X.
  * Persists deviceId, deviceName, and lastConnectedAt for auto-reconnect.
  * Runtime-only fields: status, isFirstConnectionThisSession.
  *
- * Constitution I: Offline-First. Constitution II: Write-Only Control Surface.
+ * Constitution I: Offline-First — all data stored locally.
+ * Constitution II: Bidirectional Control Surface — app reads piano state
+ * via RQ1 and subscribes to DT1 notifications. Hardware state wins on conflict.
  */
 
 import {create} from 'zustand';

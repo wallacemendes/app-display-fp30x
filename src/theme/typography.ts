@@ -1,94 +1,100 @@
-import {Platform, type TextStyle} from 'react-native';
-
 /**
- * Typography system.
+ * Typography system — T026
  *
- * Uses system fonts for maximum performance and native feel.
- * SF Pro on iOS, Roboto on Android.
+ * Constitution v2.0.1, Principle III:
+ * - LCD/display typeface (Orbitron) for BPM, time sig, tone names
+ * - Sans-serif (system font) for body text and labels
+ * - Orbitron bundled at assets/fonts/Orbitron-Regular.ttf + Orbitron-Bold.ttf
  */
 
-const fontFamily = Platform.select({
+import {Platform, type TextStyle} from 'react-native';
+
+const fontDisplay = 'Orbitron-Regular';
+const fontDisplayBold = 'Orbitron-Bold';
+const fontBody = Platform.select({
   ios: 'System',
   android: 'Roboto',
   default: 'System',
 });
 
-const fontFamilyMono = Platform.select({
-  ios: 'Menlo',
-  android: 'monospace',
-  default: 'monospace',
-});
-
 export const typography = {
-  /** 28px — Screen titles */
-  h1: {
-    fontFamily,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
-    letterSpacing: 0.36,
+  /** LCD display — large BPM, main tone name */
+  displayLg: {
+    fontFamily: fontDisplayBold,
+    fontSize: 32,
+    lineHeight: 40,
+    letterSpacing: 1,
   } as TextStyle,
 
-  /** 22px — Section headers */
-  h2: {
-    fontFamily,
+  /** LCD display — medium values (volume, beat) */
+  displayMd: {
+    fontFamily: fontDisplay,
     fontSize: 22,
-    fontWeight: '700',
     lineHeight: 28,
-    letterSpacing: 0.35,
+    letterSpacing: 0.5,
   } as TextStyle,
 
-  /** 18px — Card titles, category names */
-  h3: {
-    fontFamily,
-    fontSize: 18,
-    fontWeight: '600',
-    lineHeight: 24,
-    letterSpacing: 0,
-  } as TextStyle,
-
-  /** 16px — Body text */
-  body: {
-    fontFamily,
+  /** LCD display — small labels (category name, status values) */
+  displaySm: {
+    fontFamily: fontDisplay,
     fontSize: 16,
-    fontWeight: '400',
     lineHeight: 22,
-    letterSpacing: -0.32,
+    letterSpacing: 0.5,
   } as TextStyle,
 
-  /** 14px — Tone card names, secondary info */
-  bodySmall: {
-    fontFamily,
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 20,
-    letterSpacing: -0.15,
-  } as TextStyle,
-
-  /** 12px — Pill labels, badges, metadata */
-  caption: {
-    fontFamily,
+  /** LCD display — tiny (badges, metadata) */
+  displayXs: {
+    fontFamily: fontDisplay,
     fontSize: 12,
-    fontWeight: '500',
     lineHeight: 16,
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   } as TextStyle,
 
-  /** 10px — Fine print */
-  micro: {
-    fontFamily,
-    fontSize: 10,
-    fontWeight: '400',
-    lineHeight: 14,
-    letterSpacing: 0.1,
+  /** Body — section headers */
+  headingLg: {
+    fontFamily: fontBody,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 26,
   } as TextStyle,
 
-  /** 14px monospace — MIDI debug display */
-  mono: {
-    fontFamily: fontFamilyMono,
+  /** Body — card titles */
+  headingSm: {
+    fontFamily: fontBody,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22,
+  } as TextStyle,
+
+  /** Body — standard text */
+  body: {
+    fontFamily: fontBody,
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 20,
-    letterSpacing: 0,
   } as TextStyle,
+
+  /** Body — small text */
+  bodySmall: {
+    fontFamily: fontBody,
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 16,
+  } as TextStyle,
+
+  /** Body — labels, buttons */
+  label: {
+    fontFamily: fontBody,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  } as TextStyle,
+} as const;
+
+export const fontFamilies = {
+  display: fontDisplay,
+  displayBold: fontDisplayBold,
+  body: fontBody,
 } as const;

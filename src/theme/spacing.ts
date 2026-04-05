@@ -1,6 +1,8 @@
 /**
- * Spacing constants for consistent layout grid.
+ * Spacing constants for consistent layout grid — T027
+ *
  * Based on an 8pt grid system with 4pt for fine adjustments.
+ * Optimized for landscape-only layout (Constitution v2.0.1, Principle III).
  */
 
 export const spacing = {
@@ -45,12 +47,16 @@ export const hitSlop = {
   left: 8,
 } as const;
 
-/** Standard card grid dimensions */
+/** Landscape-specific layout helpers */
+export const landscape = {
+  /** Side padding for landscape content area */
+  gutter: 20,
+  /** Safe area inset compensation (notch / Dynamic Island) */
+  safeAreaPadding: spacing.lg,
+} as const;
+
+/** Standard card grid dimensions (landscape-optimized, flexible columns) */
 export const grid = {
-  /** Number of columns on iPhone */
-  columnsPhone: 2,
-  /** Number of columns on iPad */
-  columnsTablet: 3,
   /** Gap between grid items */
   gap: spacing.sm,
 } as const;

@@ -1,48 +1,46 @@
 /**
- * System-adaptive high-contrast color palette.
+ * System-adaptive color palette — T025
  *
- * Constitution III: System-Adaptive High-Contrast UI
- * - Dark mode: Absolute black #000000 background
- * - Light mode: Pure white #FFFFFF background
+ * Constitution v2.0.1, Principle III:
+ * - Dark mode: Absolute black #000000 background, glowing display-style text
+ * - Light mode: Steel-grey background (brushed metal aesthetic)
  * - WCAG AA contrast ratios MUST be met in both modes
  */
 
 export const palette = {
-  // Core backgrounds
+  // Core
   black: '#000000',
   white: '#FFFFFF',
 
-  // Accent — Roland-inspired red (high contrast in both modes)
-  accent: '#E53935',
-  accentLight: '#FF6F60',
-  accentDark: '#AB000D',
+  // Steel-grey scale (light mode backgrounds)
+  steel50: '#F4F5F6',
+  steel100: '#E8EAEC',
+  steel200: '#D1D4D9',
+  steel300: '#B0B5BC',
+  steel400: '#8A919A',
+  steel500: '#6B737E',
+  steel600: '#565D66',
+  steel700: '#464C53',
+  steel800: '#3C4147',
+  steel900: '#35393E',
+  steel950: '#1A1C1F',
 
-  // Neutrals — Dark mode
-  gray900: '#121212',
-  gray800: '#1E1E1E',
-  gray700: '#2C2C2C',
-  gray600: '#3D3D3D',
-  gray500: '#616161',
-  gray400: '#9E9E9E',
-  gray300: '#BDBDBD',
-  gray200: '#E0E0E0',
-  gray100: '#F5F5F5',
+  // Dark mode neutrals
+  gray900: '#0A0A0A',
+  gray800: '#141414',
+  gray700: '#1E1E1E',
+  gray600: '#2A2A2A',
+  gray500: '#3D3D3D',
 
-  // Semantic
-  success: '#4CAF50',
-  warning: '#FFC107',
-  error: '#F44336',
-  info: '#2196F3',
-
-  // Category accents
-  categoryPiano: '#42A5F5',
-  categoryEPiano: '#AB47BC',
-  categoryOther: '#26A69A',
-  categoryDrums: '#EF5350',
-  categoryGM2: '#FFA726',
+  // Accent colors (WCAG AA validated)
+  cyan: '#00BCD4',        // Category names
+  orange: '#FF9800',      // Tone names
+  green: '#4CAF50',       // Connected
+  red: '#F44336',         // Disconnected / error
+  grey: '#9E9E9E',        // Idle
+  amber: '#FFC107',       // Scanning / warning
+  blue: '#2196F3',        // Info / links
 } as const;
-
-export type ThemeMode = 'system' | 'light' | 'dark';
 
 export interface ThemeColors {
   background: string;
@@ -50,71 +48,76 @@ export interface ThemeColors {
   surfaceElevated: string;
   text: string;
   textSecondary: string;
-  textTertiary: string;
+  textMuted: string;
   border: string;
-  accent: string;
-  accentText: string;
-  tabBar: string;
-  tabBarInactive: string;
-  tabBarActive: string;
+
+  // Display-specific
+  displayBackground: string;   // LCD screen background
+  displayText: string;         // LCD text color
+  categoryText: string;        // Cyan for category names
+  toneText: string;            // Orange for tone names
+
+  // Status
   statusConnected: string;
   statusDisconnected: string;
+  statusIdle: string;
   statusScanning: string;
-  cardBackground: string;
-  cardBackgroundActive: string;
-  pillBackground: string;
-  pillBackgroundActive: string;
-  pillText: string;
-  pillTextActive: string;
-  favoriteIcon: string;
+
+  // Controls
+  tabBarBackground: string;
+  tabBarActive: string;
+  tabBarInactive: string;
+  buttonBackground: string;
+  buttonText: string;
+
+  // Favorites
+  favoriteActive: string;
 }
 
 export const darkColors: ThemeColors = {
   background: palette.black,
   surface: palette.gray900,
   surfaceElevated: palette.gray800,
-  text: palette.white,
-  textSecondary: palette.gray300,
-  textTertiary: palette.gray500,
-  border: palette.gray700,
-  accent: palette.accent,
-  accentText: palette.white,
-  tabBar: palette.gray900,
-  tabBarInactive: palette.gray500,
-  tabBarActive: palette.accent,
-  statusConnected: palette.success,
-  statusDisconnected: palette.error,
-  statusScanning: palette.warning,
-  cardBackground: palette.gray800,
-  cardBackgroundActive: palette.accent,
-  pillBackground: palette.gray700,
-  pillBackgroundActive: palette.accent,
-  pillText: palette.gray300,
-  pillTextActive: palette.white,
-  favoriteIcon: palette.warning,
+  text: '#E0E0E0',
+  textSecondary: '#9E9E9E',
+  textMuted: '#616161',
+  border: '#2A2A2A',
+  displayBackground: '#0A0F0A',    // Very dark green-black LCD
+  displayText: '#00FF88',          // Glowing green LCD text
+  categoryText: palette.cyan,
+  toneText: palette.orange,
+  statusConnected: palette.green,
+  statusDisconnected: palette.red,
+  statusIdle: palette.grey,
+  statusScanning: palette.amber,
+  tabBarBackground: palette.gray900,
+  tabBarActive: palette.cyan,
+  tabBarInactive: '#616161',
+  buttonBackground: '#1E1E1E',
+  buttonText: '#E0E0E0',
+  favoriteActive: palette.amber,
 };
 
 export const lightColors: ThemeColors = {
-  background: palette.white,
-  surface: palette.gray100,
+  background: palette.steel100,         // Steel-grey, not white
+  surface: palette.steel50,
   surfaceElevated: palette.white,
-  text: palette.black,
-  textSecondary: palette.gray600,
-  textTertiary: palette.gray400,
-  border: palette.gray200,
-  accent: palette.accentDark,
-  accentText: palette.white,
-  tabBar: palette.white,
-  tabBarInactive: palette.gray400,
-  tabBarActive: palette.accentDark,
-  statusConnected: palette.success,
-  statusDisconnected: palette.error,
-  statusScanning: palette.warning,
-  cardBackground: palette.gray100,
-  cardBackgroundActive: palette.accentDark,
-  pillBackground: palette.gray200,
-  pillBackgroundActive: palette.accentDark,
-  pillText: palette.gray600,
-  pillTextActive: palette.white,
-  favoriteIcon: palette.warning,
+  text: palette.steel950,
+  textSecondary: palette.steel600,
+  textMuted: palette.steel400,
+  border: palette.steel200,
+  displayBackground: palette.steel200,   // Brushed metal LCD area
+  displayText: '#1A1C1F',               // Dark text on steel
+  categoryText: '#00838F',              // Darker cyan for light mode contrast
+  toneText: '#E65100',                  // Darker orange for light mode contrast
+  statusConnected: '#2E7D32',           // Darker green
+  statusDisconnected: '#C62828',        // Darker red
+  statusIdle: palette.steel400,
+  statusScanning: '#F57F17',            // Darker amber
+  tabBarBackground: palette.steel200,
+  tabBarActive: '#00838F',
+  tabBarInactive: palette.steel500,
+  buttonBackground: palette.steel300,
+  buttonText: palette.steel950,
+  favoriteActive: '#F57F17',
 };

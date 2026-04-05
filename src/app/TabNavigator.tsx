@@ -1,81 +1,120 @@
 /**
- * Bottom Tab Navigator.
+ * Top Tab Navigator.
  *
- * T011: Basic tab navigation structure with placeholder screens.
- * T024: ConnectionIndicator integrated into header right.
- * Phase 1 tabs: Tones, GM2, Favorites, Presets
+ * T028: 3 tabs (PADS | DISPLAY | PRESETS) using material-top-tabs.
+ * DISPLAY is the initial/landing route.
  *
- * Constitution VI: Feature-Module Architecture — each tab maps to one feature.
+ * Constitution III: Landscape Hardware-Synth UI.
  */
 
 import React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {StyleSheet} from 'react-native';
-import {ConnectionIndicator} from '../features/connection/components/ConnectionIndicator';
-import {ToneBrowserScreen} from '../features/tones/screens/ToneBrowserScreen';
-import {GM2BrowserScreen} from '../features/gm2/screens/GM2BrowserScreen';
-import {FavoritesScreen} from '../features/favorites/screens/FavoritesScreen';
-import {PresetsScreen} from '../features/presets/screens/PresetsScreen';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import {View, Text, Pressable} from 'react-native';
+import {useAppSettingsStore} from '../store/appSettingsStore';
+import {darkColors, lightColors} from '../theme/colors';
+import {useColorScheme} from 'react-native';
+import {DisplayScreen} from '../screens/display/DisplayScreen';
+
+// Placeholder screens — replaced in later phases
+function PadsScreen() {
+  return (
+    <View className="flex-1 items-center justify-center bg-black">
+      <Text className="text-white text-lg">PADS — Phase 4</Text>
+    </View>
+  );
+}
+
+function PresetsScreen() {
+  return (
+    <View className="flex-1 items-center justify-center bg-black">
+      <Text className="text-white text-lg">PRESETS — Phase 2</Text>
+    </View>
+  );
+}
 
 export type TabParamList = {
-  Tones: undefined;
-  GM2: undefined;
-  Favorites: undefined;
+  Pads: undefined;
+  Display: undefined;
   Presets: undefined;
 };
 
-const Tab = createBottomTabNavigator<TabParamList>();
+const Tab = createMaterialTopTabNavigator<TabParamList>();
 
-function HeaderRight() {
-  return <ConnectionIndicator />;
+interface TabBarProps {
+  state: any;
+  descriptors: any;
+  navigation: any;
+}
+
+function CustomTabBar({state, descriptors, navigation}: TabBarProps) {
+  const systemScheme = useColorScheme();
+  const themePreference = useAppSettingsStore(s => s.themePreference);
+  const isDark =
+    themePreference === 'dark' ||
+    (themePreference === 'system' && systemScheme === 'dark');
+  const colors = isDark ? darkColors : lightColors;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: colors.tabBarBackground,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        gap: 8,
+      }}>
+      {state.routes.map((route: any, index: number) => {
+        const {options} = descriptors[route.key];
+        const label = options.title ?? route.name;
+        const isFocused = state.index === index;
+
+        return (
+          <Pressable
+            key={route.key}
+            onPress={() => {
+              if (!isFocused) {
+                navigation.navigate(route.name);
+              }
+            }}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              paddingVertical: 8,
+              borderRadius: 6,
+              backgroundColor: isFocused
+                ? colors.buttonBackground
+                : 'transparent',
+              borderWidth: isFocused ? 1 : 0,
+              borderColor: colors.border,
+            }}>
+            <Text
+              style={{
+                fontFamily: 'Orbitron-Bold',
+                fontSize: 13,
+                letterSpacing: 1.5,
+                color: isFocused ? colors.tabBarActive : colors.tabBarInactive,
+              }}>
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
 export function TabNavigator(): React.JSX.Element {
   return (
     <Tab.Navigator
+      initialRouteName="Display"
+      tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
-        headerShown: true,
-        headerStyle: styles.header,
-        headerTitleStyle: styles.headerTitle,
-        headerRight: HeaderRight,
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#E53935',
-        tabBarInactiveTintColor: '#808080',
+        swipeEnabled: true,
+        animationEnabled: true,
       }}>
-      <Tab.Screen
-        name="Tones"
-        component={ToneBrowserScreen}
-        options={{title: 'Tones'}}
-      />
-      <Tab.Screen
-        name="GM2"
-        component={GM2BrowserScreen}
-        options={{title: 'GM2'}}
-      />
-      <Tab.Screen
-        name="Favorites"
-        component={FavoritesScreen}
-        options={{title: 'Favorites'}}
-      />
-      <Tab.Screen
-        name="Presets"
-        component={PresetsScreen}
-        options={{title: 'Presets'}}
-      />
+      <Tab.Screen name="Pads" component={PadsScreen} options={{title: 'PADS'}} />
+      <Tab.Screen name="Display" component={DisplayScreen} options={{title: 'DISPLAY'}} />
+      <Tab.Screen name="Presets" component={PresetsScreen} options={{title: 'PRESETS'}} />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: '#000000',
-    borderTopColor: '#1A1A1A',
-  },
-  header: {
-    backgroundColor: '#000000',
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontWeight: '600' as const,
-  },
-});
