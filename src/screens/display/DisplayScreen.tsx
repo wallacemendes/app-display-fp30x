@@ -1,9 +1,10 @@
 /**
- * T037 + T044 + T050: Display Screen — Main display with ToneSelector + StatusBar.
+ * T037 + T044 + T050 + T058: Display Screen — Full display layout.
  *
  * Landing screen for the DISPLAY tab. Landscape layout:
- * - Top-right: ConnectionIndicator
+ * - Top: model name (left) + connection status + indicator (right)
  * - Left/center: ToneSelector (category + tone steppers)
+ * - Bottom-left: QuickToneSlots (3 one-tap buttons)
  * - Right: StatusBar (Tempo, Beat, Metronome, Volume)
  *
  * Auto-scans on mount if a previously paired device exists.
@@ -15,6 +16,7 @@ import React, {useEffect} from 'react';
 import {View, Text} from 'react-native';
 import {ConnectionIndicator} from '../../components/ConnectionIndicator';
 import {ToneSelector} from './ToneSelector';
+import {QuickToneSlots} from './QuickToneSlots';
 import {StatusBar} from './StatusBar';
 import {useConnection} from '../../hooks/useConnection';
 import {useThemeColors} from '../../hooks/useThemeColors';
@@ -78,13 +80,16 @@ export function DisplayScreen(): React.JSX.Element {
           paddingHorizontal: 8,
           paddingBottom: 12,
         }}>
-        {/* Left/center area: ToneSelector */}
+        {/* Left/center area: ToneSelector + QuickToneSlots */}
         <View
           style={{
             flex: 3,
-            justifyContent: 'center',
+            justifyContent: 'space-between',
           }}>
-          <ToneSelector />
+          <View style={{flex: 1, justifyContent: 'center'}}>
+            <ToneSelector />
+          </View>
+          <QuickToneSlots />
         </View>
 
         {/* Right area: StatusBar (T049/T050) */}

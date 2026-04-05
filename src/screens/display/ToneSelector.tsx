@@ -1,9 +1,9 @@
 /**
- * T040 + T043: ToneSelector — Two-tier category/tone stepper with undo.
+ * T040 + T043 + T055: ToneSelector — Two-tier category/tone stepper with undo.
  *
  * Category row (cyan): StepperControl for +/-, tap name -> CategoryPickerModal.
  * Tone row (orange): StepperControl for +/-, tap name -> TonePickerModal,
- *   long-press -> tone options (T043).
+ *   long-press -> tone options (T043, favorites toggle wired in T055).
  * Undo button visible when toneHistory.length > 0.
  *
  * Constitution III: Landscape Hardware-Synth UI.
@@ -17,6 +17,7 @@ import {StepperControl} from '../../components/StepperControl';
 import {CategoryPickerModal} from '../../components/modals/CategoryPickerModal';
 import {TonePickerModal} from '../../components/modals/TonePickerModal';
 import {useTones} from '../../hooks/useTones';
+import {useFavorites} from '../../hooks/useFavorites';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
 
@@ -27,6 +28,7 @@ const hapticOptions = {
 
 export function ToneSelector(): React.JSX.Element {
   const colors = useThemeColors();
+  const {toggleFavorite, isFavorite} = useFavorites();
   const {
     categories,
     currentCategory,
@@ -57,19 +59,22 @@ export function ToneSelector(): React.JSX.Element {
   }, []);
 
   /**
-   * T043: Long-press tone name -> options popup.
-   * Simple Alert.alert for now, refined in later phases.
+   * T043 + T055: Long-press tone name -> options popup.
+   * Favorites toggle wired to useFavorites hook with haptic feedback.
    */
   const handleToneLongPress = useCallback(() => {
     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 
     if (!activeTone) return;
 
+    const alreadyFavorite = isFavorite(activeTone.id);
+
     Alert.alert(activeTone.name, `${activeTone.categoryName} #${activeTone.position + 1}`, [
       {
-        text: 'Add to Favorites',
+        text: alreadyFavorite ? 'Remove from Favorites' : 'Add to Favorites',
         onPress: () => {
-          // Placeholder — wired to favoritesStore in Phase 6
+          toggleFavorite(activeTone.id);
+          ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
         },
       },
       {
@@ -83,7 +88,7 @@ export function ToneSelector(): React.JSX.Element {
         style: 'cancel',
       },
     ]);
-  }, [activeTone]);
+  }, [activeTone, isFavorite, toggleFavorite]);
 
   // ─── Undo Handler ──────────────────────────────────────────
 

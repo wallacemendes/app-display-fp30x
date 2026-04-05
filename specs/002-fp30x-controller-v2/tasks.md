@@ -147,11 +147,11 @@
 
 ### Implementation
 
-- [ ] T051 [P] [US4] Implement favoritesStore in `src/store/favoritesStore.ts` — array of FavoriteTone (toneId, addedAt, sortOrder). Persisted via MMKV. Actions: addFavorite, removeFavorite, isFavorite, reorder.
-- [ ] T052 [P] [US4] Write favorites store tests in `__tests__/store/favoritesStore.test.ts` — add/remove, persistence simulation, mixed SN+GM2, duplicate prevention
-- [ ] T053 [US4] Implement useFavorites hook in `src/hooks/useFavorites.ts` — exposes favorites list (resolved to full Tone objects via engine catalog), toggleFavorite, isFavorite
-- [ ] T054 [US4] Wire favorites into TonePickerModal — "Favorites" tab shows favorites list from useFavorites. Tap applies tone via DT1.
-- [ ] T055 [US4] Wire "Add to favorites" in tone options modal (long-press) — calls toggleFavorite. Haptic feedback.
+- [x] T051 [P] [US4] Implement favoritesStore in `src/store/favoritesStore.ts` — array of FavoriteTone (toneId, addedAt, sortOrder). Persisted via MMKV. Actions: addFavorite, removeFavorite, isFavorite, reorder.
+- [x] T052 [P] [US4] Write favorites store tests in `__tests__/store/favoritesStore.test.ts` — add/remove, persistence simulation, mixed SN+GM2, duplicate prevention
+- [x] T053 [US4] Implement useFavorites hook in `src/hooks/useFavorites.ts` — exposes favorites list (resolved to full Tone objects via engine catalog), toggleFavorite, isFavorite
+- [x] T054 [US4] Wire favorites into TonePickerModal — "Favorites" tab shows favorites list from useFavorites. Tap applies tone via DT1.
+- [x] T055 [US4] Wire "Add to favorites" in tone options modal (long-press) — calls toggleFavorite. Haptic feedback.
 
 **Checkpoint**: Favorites work across SN and GM2. Persist. Show in tone picker.
 
@@ -165,9 +165,9 @@
 
 ### Implementation
 
-- [ ] T056 [US5] Add quickToneSlots state to appSettingsStore — `quickToneSlots: [string | null, string | null, string | null]`. Persisted.
-- [ ] T057 [US5] Implement QuickToneSlots in `src/screens/display/QuickToneSlots.tsx` — 3 buttons showing tone name + star icon. Tap → apply tone via PianoService. Long-press → assign from favorites list. NativeWind.
-- [ ] T058 [US5] Integrate QuickToneSlots into DisplayScreen — place on right side of landscape layout.
+- [x] T056 [US5] Add quickToneSlots state to appSettingsStore — `quickToneSlots: [string | null, string | null, string | null]`. Persisted.
+- [x] T057 [US5] Implement QuickToneSlots in `src/screens/display/QuickToneSlots.tsx` — 3 buttons showing tone name + star icon. Tap → apply tone via PianoService. Long-press → assign from favorites list. NativeWind.
+- [x] T058 [US5] Integrate QuickToneSlots into DisplayScreen — place on right side of landscape layout.
 
 **Checkpoint**: One-tap tone access from main display.
 
@@ -181,13 +181,13 @@
 
 ### Implementation
 
-- [ ] T059 [P] [US6] Implement presetsStore in `src/store/presetsStore.ts` — array of Preset per data-model.md. Persisted via MMKV. Actions: createPreset (capture current performanceStore + quickToneSlots), updatePreset, deletePreset, reorder, setDefault, clearDefault. Ensure only one default.
-- [ ] T060 [P] [US6] Write presets store tests in `__tests__/store/presetsStore.test.ts` — create, update, delete, reorder, single-default enforcement, quick-tone slot capture
-- [ ] T061 [US6] Implement PresetService in `src/services/PresetService.ts` — applyPreset(): converts preset fields to DT1 messages via engine, sends batch via PianoService, restores quickToneSlots in appSettingsStore. captureCurrentState(): reads performanceStore + appSettingsStore → Preset object.
-- [ ] T062 [US6] Implement usePresets hook in `src/hooks/usePresets.ts` — exposes presets list, createPreset, applyPreset, deletePreset, renamePreset, setDefault
-- [ ] T063 [US6] Implement PresetCard in `src/screens/presets/PresetCard.tsx` — shows preset name, default badge, tone name. Tap → apply. Swipe/long-press → rename/delete/set default. NativeWind.
-- [ ] T064 [US6] Implement PresetsScreen in `src/screens/presets/PresetsScreen.tsx` — list of PresetCards with reordering. "New Preset" button captures current state. Default preset badge.
-- [ ] T065 [US6] Wire default preset auto-apply into ConnectionService — on first connection (isFirstConnectionThisSession), check for default preset, apply via PresetService, then mark isFirstConnectionThisSession = false. Skip on reconnection.
+- [x] T059 [P] [US6] Implement presetsStore in `src/store/presetsStore.ts` — array of Preset per data-model.md. Persisted via MMKV. Actions: createPreset (capture current performanceStore + quickToneSlots), updatePreset, deletePreset, reorder, setDefault, clearDefault. Ensure only one default.
+- [x] T060 [P] [US6] Write presets store tests in `__tests__/store/presetsStore.test.ts` — create, update, delete, reorder, single-default enforcement, quick-tone slot capture
+- [x] T061 [US6] Implement PresetService in `src/services/PresetService.ts` — applyPreset(): converts preset fields to DT1 messages via engine, sends batch via PianoService, restores quickToneSlots in appSettingsStore. captureCurrentState(): reads performanceStore + appSettingsStore → Preset object.
+- [x] T062 [US6] Implement usePresets hook in `src/hooks/usePresets.ts` — exposes presets list, createPreset, applyPreset, deletePreset, renamePreset, setDefault
+- [x] T063 [US6] Implement PresetCard in `src/screens/presets/PresetCard.tsx` — shows preset name, default badge, tone name. Tap → apply. Swipe/long-press → rename/delete/set default. NativeWind.
+- [x] T064 [US6] Implement PresetsScreen in `src/screens/presets/PresetsScreen.tsx` — list of PresetCards with reordering. "New Preset" button captures current state. Default preset badge.
+- [x] T065 [US6] Wire default preset auto-apply into ConnectionService — on first connection (isFirstConnectionThisSession), check for default preset, apply via PresetService, then mark isFirstConnectionThisSession = false. Skip on reconnection.
 
 **Checkpoint**: Phase 2 complete. Favorites, quick-tone slots, and presets all working. Default preset auto-applies.
 
@@ -201,11 +201,11 @@
 
 ### Implementation
 
-- [ ] T066 [P] [US7] Implement ChordService in `src/services/ChordService.ts` — held-notes Set, addNote/removeNote, analyzeChord() (pitch class intervals, match templates for major/minor/dim/aug/7th chords), getChordName(). Subscribe to noteOn/noteOff from PianoService notifications.
-- [ ] T067 [P] [US7] Write chord detection tests in `__tests__/services/ChordService.test.ts` — C major (60,64,67), C minor (60,63,67), dim, aug, 7th chords, single note → note name, 2 notes → interval, non-chord → individual notes, empty → clear
-- [ ] T068 [US7] Implement useChord hook in `src/hooks/useChord.ts` — subscribes to ChordService, exposes current chord name + held notes
-- [ ] T069 [US7] Implement ChordDisplay in `src/screens/display/ChordDisplay.tsx` — large chord name display area. LCD font. Updates in real time. Shows note names when no chord recognized.
-- [ ] T070 [US7] Integrate ChordDisplay into DisplayScreen — place in center/right area of landscape layout.
+- [x] T066 [P] [US7] Implement ChordService in `src/services/ChordService.ts` — held-notes Set, addNote/removeNote, analyzeChord() (pitch class intervals, match templates for major/minor/dim/aug/7th chords), getChordName(). Subscribe to noteOn/noteOff from PianoService notifications.
+- [x] T067 [P] [US7] Write chord detection tests in `__tests__/services/ChordService.test.ts` — C major (60,64,67), C minor (60,63,67), dim, aug, 7th chords, single note → note name, 2 notes → interval, non-chord → individual notes, empty → clear
+- [x] T068 [US7] Implement useChord hook in `src/hooks/useChord.ts` — subscribes to ChordService, exposes current chord name + held notes
+- [x] T069 [US7] Implement ChordDisplay in `src/screens/display/ChordDisplay.tsx` — large chord name display area. LCD font. Updates in real time. Shows note names when no chord recognized.
+- [x] T070 [US7] Integrate ChordDisplay into DisplayScreen — place in center/right area of landscape layout.
 
 **Checkpoint**: Live chord detection working on physical piano.
 
@@ -219,9 +219,9 @@
 
 ### Implementation
 
-- [ ] T071 [US8] Add Split/Dual DT1 builders to FP30XEngine — buildVoiceModeChange(), buildLeftToneChange(), buildSplitPointChange(), buildBalanceChange(), per discovery doc addresses (01 00 02 00–06, 0A–0C, 16–17)
-- [ ] T072 [US8] Add voice mode controls to DisplayScreen — mode selector (Single/Split/Dual), secondary tone selector for left/Tone2, split point setter, balance slider
-- [ ] T073 [US8] Wire Split/Dual configuration into PresetService — presets capture and restore voice mode parameters
+- [x] T071 [US8] Add Split/Dual DT1 builders to FP30XEngine — buildVoiceModeChange(), buildLeftToneChange(), buildSplitPointChange(), buildBalanceChange(), per discovery doc addresses (01 00 02 00–06, 0A–0C, 16–17)
+- [x] T072 [US8] Add voice mode controls to DisplayScreen — mode selector (Single/Split/Dual), secondary tone selector for left/Tone2, split point setter, balance slider
+- [x] T073 [US8] Wire Split/Dual configuration into PresetService — presets capture and restore voice mode parameters
 
 **Checkpoint**: Split/Dual modes functional.
 
@@ -233,9 +233,9 @@
 
 ### Implementation
 
-- [ ] T074 [US9] Add transpose + key touch DT1 builders to FP30XEngine — buildTransposeChange(value), buildKeyTouchChange(level), per addresses 01 00 03 07 and 01 00 02 1D
-- [ ] T075 [US9] Add transpose display to StatusBar — shows current transpose value, tap opens transpose control
-- [ ] T076 [US9] Add Key Touch selector to a settings panel — 6 levels (Fix through Super Heavy)
+- [x] T074 [US9] Add transpose + key touch DT1 builders to FP30XEngine — buildTransposeChange(value), buildKeyTouchChange(level), per addresses 01 00 03 07 and 01 00 02 1D
+- [x] T075 [US9] Add transpose display to StatusBar — shows current transpose value, tap opens transpose control
+- [x] T076 [US9] Add Key Touch selector to a settings panel — 6 levels (Fix through Super Heavy)
 
 **Checkpoint**: Phase 3 complete.
 

@@ -1,8 +1,8 @@
 /**
- * T042: TonePickerModal — Search + tabs tone browser.
+ * T042 + T054: TonePickerModal — Search + tabs tone browser.
  *
  * Top: search bar (by name or number).
- * Two tabs: "Category" (current category tones) / "Favorites" (placeholder).
+ * Two tabs: "Category" (current category tones) / "Favorites" (resolved via useFavorites).
  * FlatList for virtualized tone rendering.
  * useDeferredValue for search filtering (60 FPS).
  *
@@ -22,7 +22,7 @@ import {
 import {useThemeColors, useIsDark} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
 import {palette} from '../../theme/colors';
-import {useFavoritesStore} from '../../store/favoritesStore';
+import {useFavorites} from '../../hooks/useFavorites';
 import type {Tone, ToneCategory} from '../../engine/types';
 
 type TabId = 'category' | 'favorites';
@@ -55,7 +55,7 @@ export function TonePickerModal({
 }: TonePickerModalProps): React.JSX.Element {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const favoriteIds = useFavoritesStore(s => s.ids);
+  const {favorites: resolvedFavorites} = useFavorites();
 
   const [activeTab, setActiveTab] = useState<TabId>('category');
   const [searchText, setSearchText] = useState('');
@@ -90,21 +90,7 @@ export function TonePickerModal({
 
   const categoryTones = currentCategory.tones;
 
-  const favoriteTones = useMemo(() => {
-    if (favoriteIds.length === 0) return [];
-    const idSet = new Set(favoriteIds);
-    const result: Tone[] = [];
-    for (const cat of allCategories) {
-      for (const tone of cat.tones) {
-        if (idSet.has(tone.id)) {
-          result.push(tone);
-        }
-      }
-    }
-    return result;
-  }, [favoriteIds, allCategories]);
-
-  const displayData = searchResults ?? (activeTab === 'category' ? categoryTones : favoriteTones);
+  const displayData = searchResults ?? (activeTab === 'category' ? categoryTones : resolvedFavorites);
   const isSearching = searchResults !== null;
 
   // ─── Handlers ──────────────────────────────────────────────
@@ -266,7 +252,7 @@ export function TonePickerModal({
                 isDark={isDark}
               />
               <TabButton
-                label={`Favorites (${favoriteIds.length})`}
+                label={`Favorites (${resolvedFavorites.length})`}
                 isActive={activeTab === 'favorites'}
                 onPress={() => setActiveTab('favorites')}
                 colors={colors}

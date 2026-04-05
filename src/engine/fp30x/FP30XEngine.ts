@@ -60,6 +60,38 @@ export class FP30XEngine implements PianoEngine {
     }
   }
 
+  // ─── Phase 3: Split/Dual/Transpose/KeyTouch (T071, T074) ───
+
+  /** Build DT1 to set voice mode (0=Single, 1=Split, 2=Dual, 3=Twin). */
+  buildVoiceModeChange(mode: number): number[] {
+    return buildDT1(ADDR.VOICE_MODE, [Math.max(0, Math.min(3, mode))]);
+  }
+
+  /** Build DT1 to set left/Tone2 tone (for Split/Dual modes). */
+  buildLeftToneChange(tone: Tone): number[] {
+    return buildDT1(ADDR.LEFT_TONE_CATEGORY, [tone.category, tone.indexHigh, tone.indexLow]);
+  }
+
+  /** Build DT1 to set split point (MIDI note number). */
+  buildSplitPointChange(note: number): number[] {
+    return buildDT1(ADDR.SPLIT_POINT, [Math.max(0, Math.min(127, note))]);
+  }
+
+  /** Build DT1 to set balance (0-127, center=64). */
+  buildBalanceChange(value: number): number[] {
+    return buildDT1(ADDR.BALANCE, [Math.max(0, Math.min(127, value))]);
+  }
+
+  /** Build DT1 to set keyboard transpose (center=64, range 58-69 = -6 to +5). */
+  buildTransposeChange(value: number): number[] {
+    return buildDT1(ADDR.TRANSPOSE, [Math.max(58, Math.min(69, value))]);
+  }
+
+  /** Build DT1 to set key touch (0=Fix, 1=SuperLight, 2=Light, 3=Medium, 4=Heavy, 5=SuperHeavy). */
+  buildKeyTouchChange(level: number): number[] {
+    return buildDT1(ADDR.KEY_TOUCH, [Math.max(0, Math.min(5, level))]);
+  }
+
   buildInitialStateRequest(): number[][] {
     return [
       // Performance block: voice mode, tones, volume, key touch, metronome params

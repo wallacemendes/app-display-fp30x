@@ -14,20 +14,13 @@ import {useAppSettingsStore} from '../store/appSettingsStore';
 import {darkColors, lightColors} from '../theme/colors';
 import {useColorScheme} from 'react-native';
 import {DisplayScreen} from '../screens/display/DisplayScreen';
+import {PresetsScreen} from '../screens/presets/PresetsScreen';
 
-// Placeholder screens — replaced in later phases
+// Placeholder screen — replaced in Phase 4
 function PadsScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-black">
       <Text className="text-white text-lg">PADS — Phase 4</Text>
-    </View>
-  );
-}
-
-function PresetsScreen() {
-  return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <Text className="text-white text-lg">PRESETS — Phase 2</Text>
     </View>
   );
 }

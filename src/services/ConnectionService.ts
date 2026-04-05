@@ -13,6 +13,8 @@ import type {Transport, Unsubscribe} from '../transport/types';
 import type {PianoEngine, NotificationEvent} from '../engine/types';
 import {resolveEngine, getFP30XEngine} from '../engine/registry';
 import {useConnectionStore} from '../store/connectionStore';
+import {usePresetsStore} from '../store/presetsStore';
+import {PresetService} from './PresetService';
 
 const MAX_RECONNECT_RETRIES = 5;
 const RECONNECT_DELAY_MS = 2000;
@@ -24,9 +26,15 @@ export class ConnectionService {
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private onNotification: ((event: NotificationEvent) => void) | null = null;
+  private pianoServiceRef: import('./PianoService').PianoService | null = null;
 
   constructor(transport: Transport) {
     this.transport = transport;
+  }
+
+  /** Set PianoService reference (needed for default preset auto-apply). */
+  setPianoService(service: import('./PianoService').PianoService): void {
+    this.pianoServiceRef = service;
   }
 
   /** Set the callback for parsed notification events. */
@@ -87,6 +95,9 @@ export class ConnectionService {
       // Read initial state via RQ1
       await this.readInitialState();
 
+      // T065: Auto-apply default preset on first connection this session
+      await this.autoApplyDefaultPreset();
+
       // Setup disconnect monitoring for auto-reconnect
       this.setupAutoReconnect(deviceId);
     } catch (error) {
@@ -135,6 +146,27 @@ export class ConnectionService {
   }
 
   // ─── Private ────────────────────────────────────────────────
+
+  /**
+   * T065: Auto-apply default preset on first connection this session.
+   * Skips on reconnection (isFirstConnectionThisSession already false).
+   */
+  private async autoApplyDefaultPreset(): Promise<void> {
+    const connStore = useConnectionStore.getState();
+    if (!connStore.isFirstConnectionThisSession) return;
+
+    const defaultPreset = usePresetsStore.getState().getDefaultPreset();
+    if (defaultPreset && this.pianoServiceRef) {
+      try {
+        const presetService = new PresetService(this.pianoServiceRef);
+        await presetService.applyPreset(defaultPreset);
+      } catch {
+        // Non-fatal: preset apply failure should not break connection flow
+      }
+    }
+
+    connStore.markFirstConnectionHandled();
+  }
 
   private handleRawNotification(rawMidiBytes: number[]): void {
     if (!this.engine || !this.onNotification) return;
