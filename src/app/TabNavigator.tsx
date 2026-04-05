@@ -26,9 +26,9 @@ export type TabParamList = {
 const Tab = createMaterialTopTabNavigator<TabParamList>();
 
 interface TabBarProps {
-  state: any;
-  descriptors: any;
-  navigation: any;
+  state: {routes: {key: string; name: string}[]; index: number};
+  descriptors: Record<string, {options: {title?: string}}>;
+  navigation: {navigate: (name: string) => void};
 }
 
 function CustomTabBar({state, descriptors, navigation}: TabBarProps) {
@@ -48,7 +48,7 @@ function CustomTabBar({state, descriptors, navigation}: TabBarProps) {
         paddingVertical: 6,
         gap: 8,
       }}>
-      {state.routes.map((route: any, index: number) => {
+      {state.routes.map((route, index) => {
         const {options} = descriptors[route.key];
         const label = options.title ?? route.name;
         const isFocused = state.index === index;
@@ -92,14 +92,26 @@ export function TabNavigator(): React.JSX.Element {
   return (
     <Tab.Navigator
       initialRouteName="Display"
-      tabBar={props => <CustomTabBar {...props} />}
+      tabBar={CustomTabBar}
       screenOptions={{
         swipeEnabled: true,
         animationEnabled: true,
       }}>
-      <Tab.Screen name="Pads" component={PadsScreen} options={{title: 'PADS'}} />
-      <Tab.Screen name="Display" component={DisplayScreen} options={{title: 'DISPLAY'}} />
-      <Tab.Screen name="Presets" component={PresetsScreen} options={{title: 'PRESETS'}} />
+      <Tab.Screen
+        name="Pads"
+        component={PadsScreen}
+        options={{title: 'PADS'}}
+      />
+      <Tab.Screen
+        name="Display"
+        component={DisplayScreen}
+        options={{title: 'DISPLAY'}}
+      />
+      <Tab.Screen
+        name="Presets"
+        component={PresetsScreen}
+        options={{title: 'PRESETS'}}
+      />
     </Tab.Navigator>
   );
 }

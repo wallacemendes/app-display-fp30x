@@ -212,6 +212,24 @@ export interface PianoEngine {
    * Returns an array of SysEx messages (typically 2: performance block + tempo block).
    * Each message is raw SysEx bytes (F0...F7).
    */
+  /** Build a DT1 SysEx message to set voice mode (0=Single, 1=Split, 2=Dual, 3=Twin). */
+  buildVoiceModeChange(mode: number): number[];
+
+  /** Build a DT1 SysEx message to set left/Tone2 tone (Split/Dual modes). */
+  buildLeftToneChange(tone: Tone): number[];
+
+  /** Build a DT1 SysEx message to set split point (MIDI note number). */
+  buildSplitPointChange(note: number): number[];
+
+  /** Build a DT1 SysEx message to set balance (0-127, center=64). */
+  buildBalanceChange(value: number): number[];
+
+  /** Build a DT1 SysEx message to set keyboard transpose (center=64, range 58-69). */
+  buildTransposeChange(value: number): number[];
+
+  /** Build a DT1 SysEx message to set key touch sensitivity (0-5). */
+  buildKeyTouchChange(level: number): number[];
+
   buildInitialStateRequest(): number[][];
 
   /**

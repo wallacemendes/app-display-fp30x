@@ -64,7 +64,7 @@ export interface PresetsActions {
   /** Create a new preset. Auto-generates id, timestamps, sortOrder. */
   createPreset: (
     name: string,
-    preset: Omit<Preset, 'id' | 'createdAt' | 'updatedAt' | 'sortOrder'>,
+    preset: Omit<Preset, 'id' | 'name' | 'createdAt' | 'updatedAt' | 'sortOrder'>,
   ) => string;
   /** Update an existing preset (partial). Sets new updatedAt. */
   updatePreset: (
@@ -88,9 +88,12 @@ export interface PresetsActions {
 let counter = 0;
 
 function generateId(): string {
-  // crypto.randomUUID is available in Hermes 0.72+ and modern RN
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+  // Hermes may have crypto.randomUUID; guard with typeof checks
+  // eslint-disable-next-line no-undef
+  const g = typeof globalThis !== 'undefined' ? (globalThis as Record<string, unknown>) : {};
+  const c = g.crypto as {randomUUID?: () => string} | undefined;
+  if (c?.randomUUID) {
+    return c.randomUUID();
   }
   // Fallback: timestamp + counter
   counter += 1;

@@ -48,7 +48,7 @@ export function TonePickerModal({
   visible,
   onClose,
   currentCategory,
-  allCategories,
+  allCategories: _allCategories,
   activeTone,
   onSelectTone,
   searchByName,

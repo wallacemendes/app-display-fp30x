@@ -4,7 +4,7 @@
  * Subscribes to ChordService and exposes current chord state.
  */
 
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect} from 'react';
 import {ChordService, type ChordResult} from '../services/ChordService';
 
 /** Singleton ChordService instance. */

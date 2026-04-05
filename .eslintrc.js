@@ -14,7 +14,8 @@ module.exports = {
     ],
 
     // React Native best practices
-    'react-native/no-inline-styles': 'warn',
+    'react-native/no-inline-styles': 'off',
+    'no-bitwise': 'off', // BLE MIDI framing requires bit manipulation
     'react/react-in-jsx-scope': 'off',
 
     // General code quality

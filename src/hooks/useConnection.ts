@@ -7,7 +7,7 @@
  * Constitution V: Presentation → hooks → services.
  */
 
-import {useCallback, useRef, useEffect} from 'react';
+import {useCallback} from 'react';
 import {useConnectionStore} from '../store/connectionStore';
 import type {ConnectionService} from '../services/ConnectionService';
 

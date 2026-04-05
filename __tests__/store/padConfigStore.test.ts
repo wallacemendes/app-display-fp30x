@@ -5,7 +5,7 @@
  * persisted via MMKV middleware, command sequences stored correctly.
  */
 
-import {usePadConfigStore} from '../../src/store/padConfigStore';
+import {usePadConfigStore, type DT1Command} from '../../src/store/padConfigStore';
 
 beforeEach(() => {
   // Reset store between tests
@@ -84,9 +84,9 @@ describe('padConfigStore', () => {
     });
 
     it('updates pad commands', () => {
-      const commands = [
-        {type: 'tone' as const, params: {category: 0, indexHigh: 0, indexLow: 0}},
-        {type: 'volume' as const, params: {value: 100}},
+      const commands: DT1Command[] = [
+        {type: 'tone', params: {category: 0, indexHigh: 0, indexLow: 0}},
+        {type: 'volume', params: {value: 100}},
       ];
       usePadConfigStore.getState().updatePad('pad-2', {commands});
 

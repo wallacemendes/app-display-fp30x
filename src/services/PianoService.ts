@@ -12,7 +12,6 @@ import type {Transport} from '../transport/types';
 import type {PianoEngine, Tone, NotificationEvent} from '../engine/types';
 import {usePerformanceStore} from '../store/performanceStore';
 import {getChordService} from '../hooks/useChord';
-import {encodeTempo} from '../engine/fp30x/sysex';
 
 /** Debounce timeout for rapid input (ms). */
 const DEBOUNCE_MS = 50;

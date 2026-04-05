@@ -8,7 +8,8 @@
  * Constitution IV: DT1 SysEx Protocol Fidelity.
  */
 
-import {BleManager, type Device, type Subscription} from 'react-native-ble-plx';
+import type {BleManager} from 'react-native-ble-plx';
+import { type Device} from 'react-native-ble-plx';
 import type {DiscoveredDevice} from '../types';
 
 const BLE_MIDI_SERVICE_UUID = '03B80E5A-EDE8-4B33-A751-6CE34EC4C700';

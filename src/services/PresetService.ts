@@ -10,7 +10,7 @@
  * Constitution V: Services orchestrate engine + transport.
  */
 
-import type {PianoEngine, Tone} from '../engine/types';
+import type {Tone} from '../engine/types';
 import type {PianoService} from './PianoService';
 import type {Preset} from '../store/presetsStore';
 import {usePresetsStore} from '../store/presetsStore';
@@ -189,9 +189,9 @@ export class PresetService {
         name = `${name} (imported)`;
       }
 
+      const {name: _name, id: _id, createdAt: _ca, updatedAt: _ua, sortOrder: _so, ...rest} = preset;
       store.createPreset(name, {
-        ...preset,
-        name,
+        ...rest,
         isDefault: false, // Never import as default
       });
 

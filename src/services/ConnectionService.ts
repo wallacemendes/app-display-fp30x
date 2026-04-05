@@ -11,7 +11,8 @@
 
 import type {Transport, Unsubscribe} from '../transport/types';
 import type {PianoEngine, NotificationEvent} from '../engine/types';
-import {resolveEngine, getFP30XEngine} from '../engine/registry';
+import {getFP30XEngine} from '../engine/registry';
+import type {PianoService} from './PianoService';
 import {useConnectionStore} from '../store/connectionStore';
 import {usePresetsStore} from '../store/presetsStore';
 import {PresetService} from './PresetService';
@@ -26,14 +27,14 @@ export class ConnectionService {
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private onNotification: ((event: NotificationEvent) => void) | null = null;
-  private pianoServiceRef: import('./PianoService').PianoService | null = null;
+  private pianoServiceRef: PianoService | null = null;
 
   constructor(transport: Transport) {
     this.transport = transport;
   }
 
   /** Set PianoService reference (needed for default preset auto-apply). */
-  setPianoService(service: import('./PianoService').PianoService): void {
+  setPianoService(service: PianoService): void {
     this.pianoServiceRef = service;
   }
 
@@ -185,7 +186,7 @@ export class ConnectionService {
       try {
         await this.transport.send(req);
         // Small delay between RQ1 requests to allow piano to respond
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise<void>(resolve => setTimeout(resolve, 50));
       } catch {
         // Non-fatal: piano may not respond to all RQ1s immediately
       }
