@@ -287,10 +287,10 @@
 
 **Purpose**: Quality, performance, accessibility.
 
-- [ ] T086 [P] Run ESLint + Prettier across entire codebase — zero warnings
-- [ ] T087 [P] WCAG AA contrast audit — verify all text meets contrast ratios in both light and dark themes
-- [ ] T088 Physical device test session — full end-to-end: connect, browse tones, change via all 3 modes, verify undo, status bar interactions, presets, favorites, disconnect/reconnect
-- [ ] T089 Performance profiling — verify 60 FPS during tone browsing, < 200ms tone selection, < 500ms preset apply
+- [x] T086 [P] Run ESLint + Prettier across entire codebase — zero warnings
+- [x] T087 [P] WCAG AA contrast audit — verify all text meets contrast ratios in both light and dark themes
+- [x] T088 Physical device test session — full end-to-end: connect, browse tones, change via all 3 modes, verify undo, status bar interactions, presets, favorites, disconnect/reconnect
+- [x] T089 Performance profiling — verify 60 FPS during tone browsing, < 200ms tone selection, < 500ms preset apply
 
 ---
 
