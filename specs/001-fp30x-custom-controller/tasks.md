@@ -11,13 +11,13 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Initialize React Native project with TypeScript template
-- [ ] T002 Install core dependencies (`react-native-ble-plx`, `react-native-mmkv`, `@react-navigation/native`, `@react-navigation/bottom-tabs`, `zustand`, etc.)
-- [ ] T003 Set up ESLint and Prettier with React Native most recommended/strict rules for clean architecture
-- [ ] T004 Apply iOS specific setup (`pod install`) and configure `ios/Info.plist` for Bluetooth permissions
-- [ ] T005 Build project directory structure (`src/app`, `src/features`, `src/data`, `src/store`, `src/services`, `src/theme`)
-- [ ] T006 [P] Implement base system-adaptive high-contrast theme (`colors.ts`, `spacing.ts`, `typography.ts`) in `src/theme/`
-- [ ] T007 [P] Add raw built-in and GM2 JSON tones static data to `src/data/`
+- [x] T001 Initialize React Native project with TypeScript template
+- [x] T002 Install core dependencies (`react-native-ble-plx`, `react-native-mmkv`, `@react-navigation/native`, `@react-navigation/bottom-tabs`, `zustand`, etc.)
+- [x] T003 Set up ESLint and Prettier with React Native most recommended/strict rules for clean architecture
+- [x] T004 Apply iOS specific setup (`pod install`) and configure `ios/Info.plist` for Bluetooth permissions
+- [x] T005 Build project directory structure (`src/app`, `src/features`, `src/data`, `src/store`, `src/services`, `src/theme`)
+- [x] T006 [P] Implement base system-adaptive high-contrast theme (`colors.ts`, `spacing.ts`, `typography.ts`) in `src/theme/`
+- [x] T007 [P] Add raw built-in and GM2 JSON tones static data to `src/data/`
 
 ---
 
@@ -28,19 +28,19 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 ### Tests for Foundational MIDI Layer (TDD)
-- [ ] T008 [P] Write failing Jest unit tests for `midiEncoder` (CC, PC, SysEx byte construction) and `bleMidiPacket` (BLE MIDI packet wrapping with timestamp headers) to outline expected byte-level outputs.
+- [x] T008 [P] Write failing Jest unit tests for `midiEncoder` (CC, PC, SysEx byte construction) and `bleMidiPacket` (BLE MIDI packet wrapping with timestamp headers) to outline expected byte-level outputs.
 
 ### Implementation
-- [ ] T009 [P] Initialize MMKV storage instance in `src/store/storage.ts`
-- [ ] T010 [P] Setup Zustand base store configuration
-- [ ] T011 Create basic Bottom Bar TabNavigator in `src/app/TabNavigator.tsx` and integrate it to `src/app/App.tsx`
-- [ ] T012 Implement low-level MIDI encoder in `src/services/midi/midiEncoder.ts`
-- [ ] T013 Create BLE MIDI packet wrapping utility in `src/services/midi/bleMidiPacket.ts`
-- [ ] T014 Define global constants (BLE UUIDs, CC numbers) in `src/services/midi/constants.ts`
-- [ ] T015 Setup `react-native-keep-awake` activation at the root level (`App.tsx`) to prevent screen dimming
+- [x] T009 [P] Initialize MMKV storage instance in `src/store/storage.ts`
+- [x] T010 [P] Setup Zustand base store configuration
+- [x] T011 Create basic Bottom Bar TabNavigator in `src/app/TabNavigator.tsx` and integrate it to `src/app/App.tsx`
+- [x] T012 Implement low-level MIDI encoder in `src/services/midi/midiEncoder.ts`
+- [x] T013 Create BLE MIDI packet wrapping utility in `src/services/midi/bleMidiPacket.ts`
+- [x] T014 Define global constants (BLE UUIDs, CC numbers) in `src/services/midi/constants.ts`
+- [x] T015 Setup `react-native-keep-awake` activation at the root level (`App.tsx`) to prevent screen dimming
 
 ### Validation
-- [ ] T016 Run MIDI encoder and BLE packet tests. All byte-level outputs must match expected values from the MIDI Implementation doc.
+- [x] T016 Run MIDI encoder and BLE packet tests. All byte-level outputs must match expected values from the MIDI Implementation doc.
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -53,16 +53,16 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 **Independent Test**: Launch the app near a powered-on FP-30X and verify the connection indicator shows "connected."
 
 ### Tests for User Story 1 (TDD)
-- [ ] T017 [US1] Write failing Jest unit tests for `connectionStore`, `BleManager`, and `useConnection` hook to outline expected connection state transitions.
+- [x] T017 [US1] Write failing Jest unit tests for `connectionStore`, `BleManager`, and `useConnection` hook to outline expected connection state transitions.
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create Connection Zustand store in `src/store/connectionStore.ts`
+- [x] T018 [US1] Create Connection Zustand store in `src/store/connectionStore.ts`
 - [ ] T019 [US1] Implement `BleManager.ts` wrapper for scanning and discovering Roland manufacturer ID (41H) devices in `src/features/connection/services/BleManager.ts`
 - [ ] T020 [US1] Implement `MidiService.ts` for sending/receiving BLE MIDI packets in `src/features/connection/services/MidiService.ts`
 - [ ] T021 [US1] Create custom hook `useConnection.ts` to manage BLE lifecycle states
 - [ ] T022 [US1] Build `ConnectionIndicator.tsx` UI component for displaying the connection status
-- [ ] T023 [P] [US1] Create basic App Settings store in `src/store/appSettingsStore.ts` to persist theme preference (system/light/dark) and last-used tone category (FR-012b)
+- [x] T023 [P] [US1] Create basic App Settings store in `src/store/appSettingsStore.ts` to persist theme preference (system/light/dark) and last-used tone category (FR-012b)
 - [ ] T024 [US1] Integrate `ConnectionIndicator.tsx` into the main `TabNavigator.tsx` header
 
 ### Validation
@@ -79,11 +79,11 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 **Independent Test**: Connect to FP-30X, navigate built-in tone categories, tap a tone, and verify piano tone changes immediately.
 
 ### Tests for User Story 2 (TDD)
-- [ ] T026 [P] [US2] Write failing Jest tests for `useTones` filtering logic and `performanceStore` tone state assignment.
+- [x] T026 [P] [US2] Write failing Jest tests for `useTones` filtering logic and `performanceStore` tone state assignment.
 
 ### Implementation for User Story 2
 
-- [ ] T027 [P] [US2] Create Performance Zustand store in `src/store/performanceStore.ts` to mirror active tone
+- [x] T027 [P] [US2] Create Performance Zustand store in `src/store/performanceStore.ts` to mirror active tone
 - [ ] T028 [P] [US2] Implement `useTones.ts` hook for querying static tone data in `src/features/tones/hooks/useTones.ts`
 - [ ] T029 [P] [US2] Build `CategoryPills.tsx` UI component in `src/features/tones/components/CategoryPills.tsx`
 - [ ] T030 [P] [US2] Build `ToneCard.tsx` UI component in `src/features/tones/components/ToneCard.tsx`
@@ -134,7 +134,7 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 
 ### Implementation for User Story 4
 
-- [ ] T044 [P] [US4] Create Favorites Zustand store in `src/store/favoritesStore.ts` (MMKV persisted mapped to IDs)
+- [x] T044 [P] [US4] Create Favorites Zustand store in `src/store/favoritesStore.ts` (MMKV persisted mapped to IDs)
 - [ ] T045 [US4] Add gesture handling (long-press) and haptics to `ToneCard.tsx` to toggle favorites state
 - [ ] T046 [P] [US4] Create custom hook `useFavorites.ts` to merge static tone data with favorited IDs
 - [ ] T047 [US4] Assemble `FavoritesScreen.tsx` to list all favorites
@@ -158,7 +158,7 @@ description: "Task list for FP-30X Custom Controller MVP (Phase 1)"
 
 ### Implementation for User Story 5
 
-- [ ] T051 [P] [US5] Create Presets Zustand store in `src/store/presetsStore.ts` (MMKV persisted)
+- [x] T051 [P] [US5] Create Presets Zustand store in `src/store/presetsStore.ts` (MMKV persisted)
 - [ ] T052 [US5] Implement `usePresets.ts` hook for CRUD operations of presets
 - [ ] T053 [P] [US5] Build `PresetCard.tsx` UI component in `src/features/presets/components/PresetCard.tsx`
 - [ ] T054 [US5] Build `PresetDetailScreen.tsx` for editing/renaming/deleting in `src/features/presets/screens/PresetDetailScreen.tsx`
