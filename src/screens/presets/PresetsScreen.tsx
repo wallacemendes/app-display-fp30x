@@ -1,9 +1,10 @@
 /**
- * T064: PresetsScreen — PRESETS tab.
+ * T064 + T085: PresetsScreen — PRESETS tab.
  *
  * FlatList of PresetCards sorted by sortOrder, "New Preset" button at top,
- * empty state message when no presets exist.
+ * export/import buttons in header, empty state message when no presets exist.
  *
+ * Constitution I: Offline-First — export via Share API, no network calls.
  * Constitution III: Landscape Hardware-Synth UI.
  * Constitution V: Presentation -> hooks -> services.
  */
@@ -15,6 +16,8 @@ import {PresetCard} from './PresetCard';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
 import type {Preset} from '../../store/presetsStore';
+import {PresetService} from '../../services/PresetService';
+import {getPianoService} from '../../hooks/usePiano';
 
 export function PresetsScreen(): React.JSX.Element {
   const {
@@ -27,6 +30,27 @@ export function PresetsScreen(): React.JSX.Element {
     clearDefault,
   } = usePresets();
   const colors = useThemeColors();
+
+  const handleExport = useCallback(async () => {
+    const pianoService = getPianoService();
+    if (!pianoService) {
+      Alert.alert('Export', 'Piano service not available.');
+      return;
+    }
+    const service = new PresetService(pianoService);
+    const exported = await service.exportPresets();
+    if (!exported) {
+      Alert.alert('Export', 'No presets to export.');
+    }
+  }, []);
+
+  const handleImport = useCallback(() => {
+    Alert.alert(
+      'Import Presets',
+      'Preset import from files will be available in a future update. ' +
+        'The export/import engine is ready — file picking requires an additional native module.',
+    );
+  }, []);
 
   const handleNewPreset = useCallback(() => {
     Alert.prompt(
@@ -118,7 +142,7 @@ export function PresetsScreen(): React.JSX.Element {
 
   return (
     <View style={{flex: 1, backgroundColor: colors.background}}>
-      {/* Header with New Preset button */}
+      {/* Header with New Preset + Export/Import buttons */}
       <View
         style={{
           flexDirection: 'row',
@@ -134,24 +158,62 @@ export function PresetsScreen(): React.JSX.Element {
           }}>
           Presets
         </Text>
-        <Pressable
-          onPress={handleNewPreset}
-          style={({pressed}) => ({
-            backgroundColor: pressed ? colors.border : colors.buttonBackground,
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-          })}>
-          <Text
-            style={{
-              ...typography.label,
-              color: colors.buttonText,
-            }}>
-            + NEW PRESET
-          </Text>
-        </Pressable>
+        <View style={{flexDirection: 'row', gap: 8}}>
+          <Pressable
+            onPress={handleImport}
+            style={({pressed}) => ({
+              backgroundColor: pressed ? colors.border : colors.buttonBackground,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            })}>
+            <Text
+              style={{
+                ...typography.label,
+                color: colors.buttonText,
+              }}>
+              IMPORT
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleExport}
+            style={({pressed}) => ({
+              backgroundColor: pressed ? colors.border : colors.buttonBackground,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            })}>
+            <Text
+              style={{
+                ...typography.label,
+                color: colors.buttonText,
+              }}>
+              EXPORT
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleNewPreset}
+            style={({pressed}) => ({
+              backgroundColor: pressed ? colors.border : colors.buttonBackground,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            })}>
+            <Text
+              style={{
+                ...typography.label,
+                color: colors.buttonText,
+              }}>
+              + NEW PRESET
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Preset list or empty state */}
