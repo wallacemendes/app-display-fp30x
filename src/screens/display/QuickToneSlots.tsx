@@ -11,7 +11,7 @@ import React, {useCallback, useMemo} from 'react';
 import {View, Text, Pressable, Alert} from 'react-native';
 import {useAppSettingsStore} from '../../store/appSettingsStore';
 import {usePerformanceStore} from '../../store/performanceStore';
-import {getFP30XEngine} from '../../engine/registry';
+import {useTones} from '../../hooks/useTones';
 import {getPianoService} from '../../hooks/usePiano';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
@@ -22,16 +22,15 @@ export function QuickToneSlots(): React.JSX.Element {
   const quickToneSlots = useAppSettingsStore(s => s.quickToneSlots);
   const setQuickToneSlot = useAppSettingsStore(s => s.setQuickToneSlot);
   const activeTone = usePerformanceStore(s => s.activeTone);
+  const {findToneById} = useTones();
 
-  const engine = getFP30XEngine();
-
-  // Resolve slot tone IDs to full Tone objects
+  // Resolve slot tone IDs to full Tone objects via hook (not engine import)
   const resolvedSlots = useMemo(() => {
     return quickToneSlots.map(toneId => {
       if (!toneId) return null;
-      return engine.tones.findById(toneId) ?? null;
+      return findToneById(toneId) ?? null;
     }) as [Tone | null, Tone | null, Tone | null];
-  }, [quickToneSlots, engine.tones]);
+  }, [quickToneSlots, findToneById]);
 
   const handleSlotPress = useCallback(
     async (slotIndex: number) => {

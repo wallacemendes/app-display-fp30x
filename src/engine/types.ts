@@ -111,6 +111,8 @@ export type NotificationEvent =
   | { type: 'leftTone'; category: number; indexHigh: number; indexLow: number }
   | { type: 'noteOn'; note: number; velocity: number }
   | { type: 'noteOff'; note: number }
+  | { type: 'controlChange'; channel: number; controller: number; value: number }
+  | { type: 'programChange'; channel: number; program: number }
   | { type: 'unknown'; address: number[]; data: number[] };
 
 // ─── Device Identity ──────────────────────────────────────────

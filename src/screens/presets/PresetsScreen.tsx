@@ -12,6 +12,7 @@
 import React, {useCallback} from 'react';
 import {View, Text, FlatList, Pressable, Alert} from 'react-native';
 import {usePresets} from '../../hooks/usePresets';
+import {useTones} from '../../hooks/useTones';
 import {PresetCard} from './PresetCard';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
@@ -29,6 +30,7 @@ export function PresetsScreen(): React.JSX.Element {
     setDefault,
     clearDefault,
   } = usePresets();
+  const {findToneByDT1} = useTones();
   const colors = useThemeColors();
 
   const handleExport = useCallback(async () => {
@@ -125,17 +127,22 @@ export function PresetsScreen(): React.JSX.Element {
   }, [clearDefault]);
 
   const renderItem = useCallback(
-    ({item}: {item: Preset}) => (
-      <PresetCard
-        preset={item}
-        onApply={handleApply}
-        onRename={handleRename}
-        onDelete={handleDelete}
-        onSetDefault={handleSetDefault}
-        onClearDefault={handleClearDefault}
-      />
-    ),
-    [handleApply, handleRename, handleDelete, handleSetDefault, handleClearDefault],
+    ({item}: {item: Preset}) => {
+      const resolved = findToneByDT1(item.tone.category, item.tone.indexHigh, item.tone.indexLow);
+      return (
+        <PresetCard
+          preset={item}
+          toneName={resolved?.name ?? 'Unknown Tone'}
+          categoryName={resolved?.categoryName ?? ''}
+          onApply={handleApply}
+          onRename={handleRename}
+          onDelete={handleDelete}
+          onSetDefault={handleSetDefault}
+          onClearDefault={handleClearDefault}
+        />
+      );
+    },
+    [findToneByDT1, handleApply, handleRename, handleDelete, handleSetDefault, handleClearDefault],
   );
 
   const keyExtractor = useCallback((item: Preset) => item.id, []);

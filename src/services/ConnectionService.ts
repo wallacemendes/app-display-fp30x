@@ -28,6 +28,8 @@ export class ConnectionService {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private onNotification: ((event: NotificationEvent) => void) | null = null;
   private pianoServiceRef: PianoService | null = null;
+  private monitorIntervalId: ReturnType<typeof setInterval> | null = null;
+  private pendingStateRead = false;
 
   constructor(transport: Transport) {
     this.transport = transport;
@@ -86,6 +88,11 @@ export class ConnectionService {
       // In future: send identity request, parse reply, resolve engine.
       this.engine = getFP30XEngine();
 
+      // T006 (A2): Hand engine to PianoService so it can build DT1 messages
+      if (this.pianoServiceRef) {
+        this.pianoServiceRef.setEngine(this.engine);
+      }
+
       // Subscribe to BLE notifications
       this.notificationUnsub = this.transport.subscribe((rawMidiBytes) => {
         this.handleRawNotification(rawMidiBytes);
@@ -112,6 +119,7 @@ export class ConnectionService {
    */
   async disconnect(): Promise<void> {
     this.cancelReconnect();
+    this.clearMonitorInterval();
     this.cleanupNotifications();
     this.engine = null;
 
@@ -141,6 +149,7 @@ export class ConnectionService {
   /** Clean up all resources. */
   async destroy(): Promise<void> {
     this.cancelReconnect();
+    this.clearMonitorInterval();
     this.cleanupNotifications();
     this.engine = null;
     await this.transport.destroy();
@@ -172,6 +181,21 @@ export class ConnectionService {
   private handleRawNotification(rawMidiBytes: number[]): void {
     if (!this.engine || !this.onNotification) return;
 
+    // T010 (A3): Route RQ1 responses through parseStateResponse for bulk decomposition
+    if (this.pendingStateRead) {
+      const events = this.engine.parseStateResponse(rawMidiBytes);
+      if (events.length > 0) {
+        for (const event of events) {
+          this.onNotification(event);
+        }
+        // After processing a state response, check if we've received both blocks
+        // (performance + tempo). Simple heuristic: any successful parse counts.
+        this.pendingStateRead = false;
+        return;
+      }
+      // If parseStateResponse returns empty, fall through to normal parsing
+    }
+
     const event = this.engine.parseNotification(rawMidiBytes);
     if (event) {
       this.onNotification(event);
@@ -180,6 +204,9 @@ export class ConnectionService {
 
   private async readInitialState(): Promise<void> {
     if (!this.engine) return;
+
+    // T010 (A3): Flag that we're expecting RQ1 responses
+    this.pendingStateRead = true;
 
     const requests = this.engine.buildInitialStateRequest();
     for (const req of requests) {
@@ -191,13 +218,21 @@ export class ConnectionService {
         // Non-fatal: piano may not respond to all RQ1s immediately
       }
     }
+
+    // Safety: clear flag after a timeout in case responses never arrive
+    setTimeout(() => {
+      this.pendingStateRead = false;
+    }, 2000);
   }
 
   private setupAutoReconnect(deviceId: string): void {
+    // T007 (A13): Clear any existing monitor before creating a new one
+    this.clearMonitorInterval();
+
     // Monitor transport status changes
-    const checkInterval = setInterval(() => {
+    this.monitorIntervalId = setInterval(() => {
       if (this.transport.status === 'disconnected' && this.reconnectAttempts < MAX_RECONNECT_RETRIES) {
-        clearInterval(checkInterval);
+        this.clearMonitorInterval();
         useConnectionStore.getState().setDisconnected();
         this.attemptReconnect(deviceId);
       }
@@ -226,6 +261,13 @@ export class ConnectionService {
       this.reconnectTimer = null;
     }
     this.reconnectAttempts = 0;
+  }
+
+  private clearMonitorInterval(): void {
+    if (this.monitorIntervalId) {
+      clearInterval(this.monitorIntervalId);
+      this.monitorIntervalId = null;
+    }
   }
 
   private cleanupNotifications(): void {

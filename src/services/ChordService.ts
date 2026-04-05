@@ -162,3 +162,13 @@ function intervalsMatch(intervals: number[], template: number[]): boolean {
   // Every template interval must be present in the intervals
   return template.every(t => intervals.includes(t));
 }
+
+// T014 (A4): Lazy singleton — moved from hooks/useChord.ts to fix layer violation.
+let chordServiceInstance: ChordService | null = null;
+
+export function getChordService(): ChordService {
+  if (!chordServiceInstance) {
+    chordServiceInstance = new ChordService();
+  }
+  return chordServiceInstance;
+}

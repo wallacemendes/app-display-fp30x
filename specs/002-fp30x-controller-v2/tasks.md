@@ -1,296 +1,198 @@
-# Tasks: FP-30X Controller v2
+# Tasks: FP-30X Controller v2 — Code Review Remediation
 
 **Input**: Design documents from `/specs/002-fp30x-controller-v2/`
-**Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md, quickstart.md
+**Prerequisites**: plan.md (remediation plan), codereview.md (14 findings), spec.md, data-model.md, contracts/, research.md, quickstart.md
 
-**Tests**: TDD is mandatory per constitution. Test tasks included for pure-logic modules (SysEx, parser, framing, stores).
+**Tests**: TDD is mandatory per constitution. Test tasks included for pure-logic changes (parser, framing, service wiring).
 
-**Organization**: Tasks grouped by user story (12 stories across 5 spec phases).
+**Organization**: Tasks grouped by remediation story (RS1–RS6), mapped to code review findings (A1–A14).
 
 ## Format: `[ID] [P?] [Story?] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (US1–US12)
-- Exact file paths included in descriptions
+- **[Story]**: Which remediation story (RS1–RS6) — Setup/Foundational/Polish have no story label
+- **Finding**: Code review finding ID (A1–A14) addressed by each task
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Setup (Dependencies)
 
-**Purpose**: Project restructure from v1 feature-based to v2 layered architecture. Install new dependencies.
+**Purpose**: Install missing dependencies required by the constitution and remediation plan.
 
-- [x] T001 Create v2 directory structure: `src/engine/`, `src/engine/fp30x/`, `src/transport/`, `src/transport/ble/`, `src/services/`, `src/screens/display/`, `src/screens/presets/`, `src/screens/pads/`, `src/components/modals/`, `src/hooks/`, `__tests__/engine/fp30x/`, `__tests__/transport/ble/`, `__tests__/services/`, `__tests__/store/`
-- [x] T002 [P] Install new dependencies: `@react-navigation/material-top-tabs`, `react-native-pager-view`, `nativewind`, `tailwindcss`, `react-native-reusables`
-- [x] T003 [P] Configure NativeWind: `tailwind.config.js`, `babel.config.js` plugin, `global.css`, `metro.config.js` adjustments
-- [x] T004 [P] Bundle Orbitron font: download Regular + Bold weights, add to `ios/` fonts directory, configure `react-native.config.js` for custom font linking
-- [x] T005 [P] Configure landscape-only orientation in `ios/Info.plist` (remove portrait orientations)
+- [ ] T001 [P] Install `react-native-reusables` — constitutional mandate (A5), run `npm install react-native-reusables && cd ios && pod install`
+- [ ] T002 [P] Install `react-native-document-picker` for preset import flow (A10) — run `npm install react-native-document-picker && cd ios && pod install`
+- [ ] T003 [P] Install `react-native-draggable-flatlist` for preset reorder UI (A11) — run `npm install react-native-draggable-flatlist && cd ios && pod install`
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 2: Foundational — Service Bootstrap (A1, A2)
 
-**Purpose**: Engine core, transport core, stores, and theme. MUST complete before ANY user story.
+**Purpose**: Create the missing service initialization layer. BLOCKS all runtime functionality.
 
-**CRITICAL**: No user story work can begin until this phase is complete.
+**⚠️ CRITICAL**: The entire app is non-functional at runtime without this phase. No hook actions work, no notifications flow, no DT1 commands are sent.
 
-### Engine Core
+- [x] T004 Create `src/app/bootstrap.ts` — instantiate BleTransport, PianoService, ConnectionService. Wire `connectionService.setPianoService(pianoService)`, `connectionService.setNotificationHandler(event => pianoService.handleNotification(event))`, `setConnectionService(connectionService)` (from `useConnection.ts`), `setPianoService(pianoService)` (from `usePiano.ts`). Guard with `initialized` flag for idempotency.
+- [x] T005 Update `App.tsx` — call `bootstrap()` at module level (before component definition, not inside useEffect) so services are wired before any React component mounts. Import from `./bootstrap`.
+- [x] T006 Wire engine hand-off in `src/services/ConnectionService.ts` — after successful connect and engine selection (`this.engine = getFP30XEngine()`), call `this.pianoServiceRef?.setEngine(this.engine)` so PianoService can build DT1 messages via the engine.
+- [x] T007 Fix reconnect monitor interval leak in `src/services/ConnectionService.ts` (A13) — persist the connection monitor `setInterval` handle as a class field (`private monitorIntervalId: ReturnType<typeof setInterval> | null`). Clear it in `disconnect()` and `destroy()` methods. Prevent accumulation on repeated connect cycles.
+- [x] T008 Verify bootstrap wiring end-to-end — add temporary `console.log` in `PianoService.handleNotification()` and `usePiano` action wrappers. Confirm they fire (not early-returning on null). Remove logs after verification.
 
-- [x] T006 [P] Implement engine types interface in `src/engine/types.ts` — PianoEngine, ToneCatalog, ToneCategory, Tone, NotificationEvent, DeviceIdentity types per contracts/piano-engine.ts
-- [x] T007 [P] Implement FP-30X constants in `src/engine/fp30x/constants.ts` — model ID (`00 00 00 28`), device ID (`0x10`), Roland manufacturer ID (`0x41`), BLE MIDI service/characteristic UUIDs
-- [x] T008 [P] Implement DT1 address map in `src/engine/fp30x/addresses.ts` — all known DT1 addresses from discovery doc Section 6 (tone, volume, tempo, metronome, voice mode, transpose, key touch, split, balance)
-- [x] T009 Implement SysEx builders in `src/engine/fp30x/sysex.ts` — `buildDT1()`, `buildRQ1()`, `rolandChecksum()`, `buildIdentityRequest()`. All byte construction per discovery doc Section 4 + Appendix A
-- [x] T010 [P] Write SysEx builder tests in `__tests__/engine/fp30x/sysex.test.ts` — byte-level assertions for DT1 tone change (Concert Piano = `F0 41 10 00 00 00 28 12 01 00 02 07 00 00 00 76 F7`), RQ1, checksum, tempo encoding (2-byte 7-bit), volume, metronome toggle
-- [x] T011 Implement tone catalog in `src/engine/fp30x/tones.ts` — complete SN (65 tones, 8 categories) + GM2 (256 tones) with DT1 category/index format per discovery doc Sections 7-8. ToneCatalog with findByDT1(), findById(), searchByName(), getToneAtPosition()
-- [x] T012 [P] Write tone catalog tests in `__tests__/engine/fp30x/tones.test.ts` — verify 321 total tones, category counts (Piano=12, E.Piano=7, ..., GM2=256), findByDT1 for Concert Piano (0,0,0), GM2 Organ 1 (8,0,36), search by name "Piano", boundary tones per category
-- [x] T013 Implement notification parser in `src/engine/fp30x/parser.ts` — parse DT1 echoes (volume, tone, tempo, metronome state/beat/pattern/volume/tone, voice mode, transpose, key touch), Note On/Off, handle running status, return typed NotificationEvent
-- [x] T014 [P] Write parser tests in `__tests__/engine/fp30x/parser.test.ts` — DT1 volume echo (`01 00 02 13 34` → volume 52), tone echo, tempo echo (2-byte decode), Note On (`90 3C 64` → noteOn C4 vel 100), Note Off, metronome state (`01 00 01 0F 01` → on), unknown address → unknown event
-- [x] T015 Implement FP30XEngine in `src/engine/fp30x/FP30XEngine.ts` — implements PianoEngine interface, wires sysex builders + parser + tone catalog. Methods: buildToneChange, buildVolumeChange, buildTempoChange, buildMetronomeToggle, buildMetronomeParam, buildInitialStateRequest, parseNotification, parseStateResponse, supportsDevice
-- [x] T016 Implement engine registry in `src/engine/registry.ts` — maps DeviceIdentity to PianoEngine instance. Register FP30XEngine for model ID 0x28.
-
-### Transport Core
-
-- [x] T017 [P] Implement transport types in `src/transport/types.ts` — Transport interface, DiscoveredDevice, TransportStatus, NotificationListener, Unsubscribe per contracts/transport.ts
-- [x] T018 Implement BLE MIDI framing in `src/transport/ble/framing.ts` — `wrapInBleMidiPacket()`, `wrapMultipleInBleMidiPacket()`, `stripBleFraming()` (new: extract raw MIDI from notification bytes, skip header/timestamps), `base64ToBytes()`, `bytesToBase64()`
-- [x] T019 [P] Write framing tests in `__tests__/transport/ble/framing.test.ts` — wrap SysEx with F7 timestamp, wrap standard message, strip BLE framing from notification bytes (verify header/timestamp removal), roundtrip wrap→strip
-
-### Stores
-
-- [x] T020 [P] Implement MMKV storage adapter in `src/store/storage.ts` (keep existing or rewrite for NativeWind compatibility)
-- [x] T021 [P] Implement connectionStore in `src/store/connectionStore.ts` — DeviceConnection state per data-model.md. Persist deviceId/deviceName/lastConnectedAt. Runtime: status, isFirstConnectionThisSession
-- [x] T022 [P] Implement performanceStore in `src/store/performanceStore.ts` — PerformanceState per data-model.md. Runtime-only (not persisted). Fields: activeTone, toneHistory (stack), pendingTone, volume, tempo, metronomeOn, metronomeBeat, metronomePattern, metronomeVolume, metronomeTone. Actions: setActiveTone (push to history), undo (pop history, return previous), setVolume, setTempo, etc.
-- [x] T023 [P] Implement appSettingsStore in `src/store/appSettingsStore.ts` — theme (system/light/dark), lastCategoryIndex, defaultPresetId. Persisted via MMKV.
-- [x] T024 [P] Write store tests in `__tests__/store/performanceStore.test.ts` — tone history push/undo, undo with empty history, setActiveTone clears pendingTone, volume/tempo set
-
-### Theme
-
-- [x] T025 [P] Implement color tokens in `src/theme/colors.ts` — steel-grey light mode palette, absolute black dark mode palette, WCAG AA validated accent colors (cyan for category, orange for tone name, green/red/grey for BLE status)
-- [x] T026 [P] Implement typography in `src/theme/typography.ts` — Orbitron font family config for LCD displays (BPM, time sig, tone names), Inter/system font for body/labels. NativeWind custom font class mappings
-- [x] T027 [P] Implement spacing tokens in `src/theme/spacing.ts` — landscape-optimized spacing scale
-
-### App Shell
-
-- [x] T028 Implement TabNavigator in `src/app/TabNavigator.tsx` — `@react-navigation/material-top-tabs` with 3 tabs (PADS | DISPLAY | PRESETS). DISPLAY as initial route. Custom tabBar styled as hardware segment buttons with NativeWind. Landscape-optimized.
-- [x] T029 Update App.tsx in `src/app/App.tsx` — NativeWind provider, navigation container, theme provider (system-adaptive with manual override from appSettingsStore), wake lock (`react-native-keep-awake`)
-
-**Checkpoint**: Foundation ready — engine can build/parse DT1, transport can frame BLE packets, stores are wired, theme configured, tab shell renders. User story implementation can begin.
+**Checkpoint**: Services instantiated, wired, and hooks have non-null references. Hook actions no longer silently no-op. Notification pipeline connected: BLE → ConnectionService → PianoService → stores → UI.
 
 ---
 
-## Phase 3: User Story 1 — Connect to Piano (P1, Phase 1)
+## Phase 3: RS1 — Bidirectional State Sync (A3)
 
-**Goal**: BLE scan, connect, auto-reconnect, initial state read via RQ1, bidirectional DT1 notification sync.
+**Goal**: Wire RQ1 response parsing so the initial state read on connect actually populates the UI. Currently, RQ1 requests are sent but responses are not decomposed.
 
-**Independent Test**: Launch app near powered-on FP-30X. BLE icon turns green. Tone selector shows piano's current tone. Status bar shows tempo/volume. Change volume on piano knob → app updates.
+**Independent Test**: Connect to FP-30X. After connection, status bar shows actual piano tempo/volume/metronome. Tone selector shows actual active tone. No stale/default values.
+
+**Finding**: A3 (Bidirectional State Sync — CRITICAL)
 
 ### Tests
 
-- [x] T030 [P] [US1] Write BLE transport mock + ConnectionService tests in `__tests__/services/ConnectionService.test.ts` — scan timeout, connect flow, disconnect cleanup, auto-reconnect logic
+- [x] T009 [P] [RS1] Write RQ1 response parsing test in `__tests__/engine/fp30x/parser.test.ts` — test `parseStateResponse()` with a mock performance block DT1 response. Verify it decomposes into individual events: tone, volume, voiceMode, metronome params. Test tempo block response → tempo event. Test empty/malformed response → empty array.
 
 ### Implementation
 
-- [x] T031 [US1] Implement BLE scanner in `src/transport/ble/scanner.ts` — scan for BLE MIDI service UUID, filter by device name, scan timeout (10s), stop on discovery
-- [x] T032 [US1] Implement BleTransport in `src/transport/ble/BleTransport.ts` — implements Transport interface. scan(), connect() (discover services + verify MIDI char), disconnect(), send() (wrap in BLE framing + writeWithoutResponse), subscribe() (monitorCharacteristicForDevice + strip framing + dispatch to listeners), destroy()
-- [x] T033 [US1] Implement ConnectionService in `src/services/ConnectionService.ts` — orchestrates: scan → connect → send identity request → select engine from registry → subscribe to notifications → send RQ1 initial state requests → parse responses → populate stores. Auto-reconnect on disconnect (max 5 retries, 2s delay). Track isFirstConnectionThisSession.
-- [x] T034 [US1] Implement PianoService core in `src/services/PianoService.ts` — setEngine(), handleNotification() (routes parsed events to stores), changeTone() (build DT1 via engine + send via transport + debounce), changeVolume(), changeTempo(), toggleMetronome(). Debounce rapid input (only last selection sent).
-- [x] T035 [US1] Implement useConnection hook in `src/hooks/useConnection.ts` — exposes connectionStore state + scan/connect/disconnect actions from ConnectionService
-- [x] T036 [US1] Implement ConnectionIndicator in `src/components/ConnectionIndicator.tsx` — BLE icon (green=connected, red=disconnected, grey=idle). Tap opens connection info panel (device name + disconnect button). NativeWind styled.
-- [x] T037 [US1] Wire connection flow into DisplayScreen in `src/screens/display/DisplayScreen.tsx` — basic screen shell with ConnectionIndicator in top-right. Auto-scan on mount if previously paired device exists.
+- [x] T010 [RS1] Implement RQ1 response routing in `src/services/ConnectionService.ts` — add `private pendingStateRead: boolean = false` flag. After sending RQ1 requests in `readInitialState()`, set `pendingStateRead = true`. In `handleRawNotification()`: if `pendingStateRead` is true AND the incoming DT1 base address matches a requested block (performance `01 00 02 00` or tempo `01 00 03 09`), route through `this.engine.parseStateResponse(bytes)` → get `NotificationEvent[]` → dispatch each via `this.onNotification(event)`. After both blocks are processed, set `pendingStateRead = false`.
+- [x] T011 [RS1] Wire initial state events into stores — verify that `PianoService.handleNotification()` correctly routes all event types from `parseStateResponse()` to `performanceStore` setters (tone → `setActiveTone`, volume → `setVolume`, tempo → `setTempo`, metronome → `setMetronomeOn/Beat/Pattern/Volume/Tone`, voiceMode → `setVoiceMode`). No code changes expected if PianoService.handleNotification is already complete — just verify the flow.
 
-**Checkpoint**: App connects to FP-30X, reads initial state, stays in sync via notifications. BLE icon shows status.
+**Checkpoint**: On connect, RQ1 responses populate stores. UI shows real piano state. Hardware-authoritative principle (II) is satisfied.
 
 ---
 
-## Phase 4: User Story 2 — Browse and Select Tones (P1, Phase 1)
+## Phase 4: RS2 — Layer Violation Fixes (A4)
 
-**Goal**: Two-tier tone selector with +/- cycling, category picker modal, tone picker modal with search + favorites tab, long-press options, undo history.
+**Goal**: Remove all cross-layer import violations to comply with Constitution Principle V.
 
-**Independent Test**: Connect to FP-30X. Press + to cycle tones. Tap category name → picker. Tap tone name → list with search. Piano changes tone in each case. Undo reverts.
+**Independent Test**: `grep -r "from '../../engine" src/screens/` returns zero results. `grep -r "from '../hooks" src/services/` returns zero results.
+
+**Finding**: A4 (Constitution Layering — CRITICAL)
 
 ### Implementation
 
-- [x] T038 [US2] Implement useTones hook in `src/hooks/useTones.ts` — exposes engine tone catalog, current category/tone from performanceStore, nextTone(), prevTone(), nextCategory(), prevCategory(), selectTone() (calls PianoService.changeTone + pushes history), undo(), searchByName(), searchByNumber()
-- [x] T039 [US2] Implement StepperControl in `src/components/StepperControl.tsx` — reusable +/- button pair with NativeWind styling (hardware button aesthetic). Accepts onIncrement, onDecrement, label display area (tappable + long-pressable)
-- [x] T040 [US2] Implement ToneSelector in `src/screens/display/ToneSelector.tsx` — two-tier: category row (cyan text, +/- stepper, tap name → CategoryPickerModal) + tone row (orange text, +/- stepper, tap name → TonePickerModal, long-press → options modal). Undo button (↩) visible when toneHistory.length > 0
-- [x] T041 [US2] Implement CategoryPickerModal in `src/components/modals/CategoryPickerModal.tsx` — two-column layout: left = all categories, right = tones of selected category. Tap tone → select + close. NativeWind + RN Reusables modal pattern.
-- [x] T042 [US2] Implement TonePickerModal in `src/components/modals/TonePickerModal.tsx` — two-column: left toggles "Favorites"/"Category", right shows corresponding tone list. Search bar at top (by name or by number). Tap tone → select + send DT1 + close.
-- [x] T043 [US2] Implement tone options modal (inline or separate component) — long-press tone name opens: "Add to favorites", "Set as default tone". Uses haptic feedback.
-- [x] T044 [US2] Integrate ToneSelector into DisplayScreen — place on left side of landscape layout. Wire to useTones hook. Verify tone changes send DT1 and piano responds.
+- [x] T012 [P] [RS2] Fix `src/screens/presets/PresetCard.tsx` (line 17) — remove `import {fp30xToneCatalog} from '../../engine/fp30x/tones'`. Instead, accept `toneName: string` as a prop resolved by the parent `PresetsScreen` via `useTones` hook's tone catalog. Update `PresetsScreen.tsx` to resolve tone name before passing to `PresetCard`.
+- [x] T013 [P] [RS2] Fix `src/screens/display/QuickToneSlots.tsx` (line 14) — remove `import {getFP30XEngine} from '../../engine/registry'`. Use `useTones` hook to access the tone catalog and resolve tone objects from IDs stored in `appSettingsStore.quickToneSlots`.
+- [x] T014 [RS2] Fix `src/services/PianoService.ts` (line 14) — remove `import {getChordService} from '../hooks/useChord'`. Move `ChordService` lazy singleton pattern from `src/hooks/useChord.ts` into `src/services/ChordService.ts` as a module-level `getChordService()` export. Update `PianoService.ts` to import `getChordService` from `../services/ChordService` (same layer). Update `useChord.ts` to import from `../services/ChordService` instead of defining the singleton locally.
+- [x] T015 [RS2] Verify no cross-layer imports remain — run `grep -r "from '../../engine" src/screens/` and `grep -r "from '../hooks" src/services/`. Both must return zero results. Also check `grep -r "from '../../transport" src/screens/`.
 
-**Checkpoint**: Full tone browsing with 3 interaction modes. Undo works. Piano changes tone on every selection.
+**Checkpoint**: All layer boundaries clean. Presentation → Services (via hooks) → Engine + Transport. No violations.
 
 ---
 
-## Phase 5: User Story 3 — Live Status Bar (P1, Phase 1)
+## Phase 5: RS3 — Protocol Fidelity (A6, A7)
 
-**Goal**: Interactive bottom bar showing tempo, beat, metronome, volume. Each tappable. Piano notifications update values live.
+**Goal**: Add BLE characteristic validation, MIDI running status reconstruction, and CC/PC echo handling.
 
-**Independent Test**: Connect. Verify status values match piano. Tap tempo → change it. Tap metronome → toggle. Change tempo on piano → display updates.
+**Independent Test**: Connect to FP-30X. Play rapid staccato notes (running status scenario). Verify all Note On/Off events parse correctly. Check logs for CC/PC echoes when changing tone on piano's physical buttons.
+
+**Finding**: A6 (BLE Characteristic Discovery — HIGH), A7 (Parser Fidelity — HIGH)
+
+### Tests
+
+- [x] T016 [P] [RS3] Write running status framing test in `__tests__/transport/ble/framing.test.ts` — create a BLE MIDI packet with two Note On messages where the second uses running status (omits 0x90 status byte). Verify `stripBleFraming()` reconstructs both messages correctly. Test running status resets at SysEx boundaries (F0). Test running status only applies to channel messages (not system).
+- [x] T017 [P] [RS3] Write CC/PC echo parser test in `__tests__/engine/fp30x/parser.test.ts` — test `parseNotification()` with Control Change bytes (`B0 07 64` → controlChange event, channel 0, controller 7, value 100). Test Program Change (`C0 05` → programChange event, channel 0, program 5). Verify these return typed events instead of null.
 
 ### Implementation
 
-- [x] T045 [US3] Implement usePiano hook in `src/hooks/usePiano.ts` — facade combining performanceStore state + PianoService actions. Selective subscriptions for volume, tempo, metronomeOn, metronomeBeat.
-- [x] T046 [US3] Implement TempoModal in `src/components/modals/TempoModal.tsx` — +1/-1, +5/-5, +10/-10 buttons + "Set BPM" text input. Sends DT1 tempo change on each action. LCD font for BPM display.
-- [x] T047 [US3] Implement BeatModal in `src/components/modals/BeatModal.tsx` — beat picker (0/4 through 6/4) + rhythm pattern picker (Off + 7 options). Sends DT1 on selection.
-- [x] T048 [US3] Implement VolumeOverlay in `src/components/modals/VolumeOverlay.tsx` — vertical fader. Sends DT1 volume commands during drag. Debounced.
-- [x] T049 [US3] Implement StatusBar in `src/screens/display/StatusBar.tsx` — horizontal bar: tempo (tap → TempoModal), beat (tap → BeatModal), metronome (tap → toggle DT1), volume (tap → VolumeOverlay). LCD font for values. NativeWind.
-- [x] T050 [US3] Integrate StatusBar into DisplayScreen — place at bottom of landscape layout. Wire to usePiano hook. Verify all status items are interactive and update from piano notifications.
+- [x] T018 [RS3] Add BLE characteristic property validation in `src/transport/ble/BleTransport.ts` (A6) — after `discoverAllServicesAndCharacteristics()`, query the MIDI characteristic object for `isWritableWithoutResponse` and `isNotifiable` properties. If either is false or missing, reject the connection with a descriptive error: `"MIDI characteristic does not support required properties (write-without-response + notify)"`. Log the actual properties for diagnostics.
+- [x] T019 [RS3] Implement running status reconstruction in `src/transport/ble/framing.ts` `stripBleFraming()` (A7) — add `let lastStatusByte = 0` before the parse loop. When a data byte (< 0x80) appears where a status byte is expected, insert `lastStatusByte` before it and parse as a complete message. Reset `lastStatusByte` on SysEx start (0xF0) and at packet boundaries. Only apply to channel messages (0x80–0xEF).
+- [x] T020 [RS3] Add CC and PC echo handling in `src/engine/fp30x/parser.ts` `parseNotification()` (A7) — add cases for Control Change (0xB0–0xBF): extract channel, controller number, value → return `{ type: 'controlChange', channel, controller, value }`. Add case for Program Change (0xC0–0xCF): extract channel, program → return `{ type: 'programChange', channel, program }`. Add these new event types to `NotificationEvent` union in `src/engine/types.ts`.
+- [x] T021 [RS3] Update `src/services/PianoService.ts` `handleNotification()` — add cases for `controlChange` and `programChange` event types. Log at debug level: `"CC echo: ch=${e.channel} cc=${e.controller} val=${e.value}"`. Do NOT update stores (CC/PC are informational only for BLE FP-30X).
 
-**Checkpoint**: Phase 1 (Core Display) complete. App connects, browses tones, shows live status, stays in sync bidirectionally.
+**Checkpoint**: BLE characteristic validated on connect. Running status messages parse correctly. CC/PC echoes logged instead of silently dropped.
 
 ---
 
-## Phase 6: User Story 4 — Favorite Tones (P1, Phase 2)
+## Phase 6: RS4 — Tone Selector & Pending Queue (A8, A9)
 
-**Goal**: Mark any tone (SN or GM2) as favorite. Persist across sessions. Mixed list.
+**Goal**: Fix tone selector behavior (category +/- applies first tone, cross-category number search, default tone action) and wire the pending tone queue for offline resilience.
 
-**Independent Test**: Mark "Concert Piano" + "Organ 1" as favorites. Close app. Reopen. Both present. Tap each — piano changes.
+**Independent Test**: Press category + → verify piano plays first tone of new category. Open tone picker → type "10" in number search → verify results span all categories. Select a tone while disconnected → verify pending indicator shows → reconnect → tone auto-sends.
+
+**Finding**: A8 (Pending Tone Queue — HIGH), A9 (Tone Selector Requirement Drift — HIGH)
 
 ### Implementation
 
-- [x] T051 [P] [US4] Implement favoritesStore in `src/store/favoritesStore.ts` — array of FavoriteTone (toneId, addedAt, sortOrder). Persisted via MMKV. Actions: addFavorite, removeFavorite, isFavorite, reorder.
-- [x] T052 [P] [US4] Write favorites store tests in `__tests__/store/favoritesStore.test.ts` — add/remove, persistence simulation, mixed SN+GM2, duplicate prevention
-- [x] T053 [US4] Implement useFavorites hook in `src/hooks/useFavorites.ts` — exposes favorites list (resolved to full Tone objects via engine catalog), toggleFavorite, isFavorite
-- [x] T054 [US4] Wire favorites into TonePickerModal — "Favorites" tab shows favorites list from useFavorites. Tap applies tone via DT1.
-- [x] T055 [US4] Wire "Add to favorites" in tone options modal (long-press) — calls toggleFavorite. Haptic feedback.
+- [x] T022 [RS4] Fix `src/hooks/useTones.ts` `nextCategory()` and `prevCategory()` (A9) — after updating `lastCategoryIndex` in appSettingsStore, get the first tone of the new category via `categories[newIndex].tones[0]` and call `selectTone(firstTone)` to apply it. This sends the DT1 command and pushes to tone history, matching FR-012 behavior: "cycle to the next tone category and the tone selector resets to the first tone in that category."
+- [x] T023 [RS4] Fix `src/components/modals/TonePickerModal.tsx` number search (A9) — replace the single-category number search (line 81: `currentCategory.tones[asNumber - 1]`) with the cross-category `searchByNumber(asNumber)` method from the `useTones` hook. This returns tone #N from every category, matching FR-012b: "returns tone N from every category that has one."
+- [ ] T024 [RS4] Implement "Set as default tone" action (A9) — in the tone options modal (long-press), replace the placeholder with real logic: persist the selected tone's ID in `appSettingsStore` as `defaultToneId`. On first connect (if no default preset is set), apply this tone via `PianoService.changeTone()`. Add `defaultToneId: string | null` to `appSettingsStore` if not present.
+- [ ] T025 [RS4] Wire pending tone queue — send path in `src/hooks/useTones.ts` or `src/services/PianoService.ts` `changeTone()` (A8): check `connectionStore.status`. If not `'connected'`, call `performanceStore.setPendingTone(tone)` instead of sending DT1. Update ToneSelector to show a pending indicator (e.g., pulsing outline or "pending" badge) when `performanceStore.pendingTone` is not null.
+- [ ] T026 [RS4] Wire pending tone flush on connect in `src/services/ConnectionService.ts` (A8) — after successful connection and initial state read, check `performanceStore.getState().pendingTone`. If present, send it via `this.pianoServiceRef.changeTone(pendingTone)` and call `performanceStore.getState().clearPendingTone()`.
 
-**Checkpoint**: Favorites work across SN and GM2. Persist. Show in tone picker.
+**Checkpoint**: Category +/- applies first tone. Number search is cross-category. Default tone action works. Pending queue sends on reconnect.
 
 ---
 
-## Phase 7: User Story 5 — Quick Tone Slots (P1, Phase 2)
+## Phase 7: RS5 — Import/Export & Reorder (A10, A11)
 
-**Goal**: 3 always-visible quick-tone buttons on DISPLAY screen.
+**Goal**: Replace the import stub with a real file picker + conflict resolution UI. Add drag-to-reorder for presets.
 
-**Independent Test**: Assign 3 favorites. Tap a slot → piano changes tone instantly.
+**Independent Test**: Export presets → import file → conflict dialog appears → choose rename/replace/skip → presets merge correctly. Long-press preset card → drag to reorder → order persists after app restart.
+
+**Finding**: A10 (Import/Export Completion Gap — HIGH), A11 (Preset Reordering Missing — HIGH)
 
 ### Implementation
 
-- [x] T056 [US5] Add quickToneSlots state to appSettingsStore — `quickToneSlots: [string | null, string | null, string | null]`. Persisted.
-- [x] T057 [US5] Implement QuickToneSlots in `src/screens/display/QuickToneSlots.tsx` — 3 buttons showing tone name + star icon. Tap → apply tone via PianoService. Long-press → assign from favorites list. NativeWind.
-- [x] T058 [US5] Integrate QuickToneSlots into DisplayScreen — place on right side of landscape layout.
+- [ ] T027 [RS5] Refactor `src/services/PresetService.ts` import logic (A10) — split `importPresets()` into two methods: `detectConflicts(parsedPresets: Preset[]): ImportConflict[]` (returns list of name-conflicting presets with existing matches) and `resolveImport(conflicts: ImportConflict[]): ImportResult` (applies each conflict's user-chosen resolution: rename appends suffix, replace overwrites existing, skip ignores). Keep the JSON parsing and validation in a `parsePresetFile(json: string): Preset[]` method. Remove the automatic `" (imported)"` suffix behavior.
+- [ ] T028 [RS5] Create conflict resolution modal in `src/components/modals/ImportConflictModal.tsx` (A10) — modal that shows each conflicting preset name with three buttons: "Rename" (appends "(2)"), "Replace" (overwrites existing), "Skip" (don't import this one). Iterates through conflicts one at a time. Returns the full `ImportConflict[]` with resolved strategies. NativeWind styled.
+- [ ] T029 [RS5] Replace import stub in `src/screens/presets/PresetsScreen.tsx` (A10) — replace the `Alert.alert("Coming soon")` stub with: `DocumentPicker.pick({ type: ['public.json'] })` → read file contents → `presetService.parsePresetFile(json)` → `presetService.detectConflicts(presets)` → if conflicts exist, show `ImportConflictModal` → `presetService.resolveImport(resolvedConflicts)` → show success toast with count.
+- [ ] T030 [RS5] Add `reorderPresets` action to `src/store/presetsStore.ts` (A11) — accept `(fromIndex: number, toIndex: number)` or `(reorderedData: Preset[])`. Update `sortOrder` values for all affected presets. Persist immediately via MMKV.
+- [ ] T031 [RS5] Expose `reorderPresets` in `src/hooks/usePresets.ts` (A11) — add `reorderPresets` to the hook's returned object, calling through to `presetsStore.getState().reorderPresets()`.
+- [ ] T032 [RS5] Replace FlatList with DraggableFlatList in `src/screens/presets/PresetsScreen.tsx` (A11) — import `DraggableFlatList` from `react-native-draggable-flatlist`. Pass `onDragEnd={({ data }) => reorderPresets(data)}`. Add drag handle to `PresetCard` (long-press to initiate drag per research.md §12).
 
-**Checkpoint**: One-tap tone access from main display.
-
----
-
-## Phase 8: User Story 6 — Presets (P1, Phase 2)
-
-**Goal**: Save/load named presets (tone + volume + tempo + metronome + quick-tone slots). Default preset auto-applies on first connect.
-
-**Independent Test**: Save preset (Strings, vol=80, tempo=90). Close app. Reopen. Connect. Default preset auto-applies.
-
-### Implementation
-
-- [x] T059 [P] [US6] Implement presetsStore in `src/store/presetsStore.ts` — array of Preset per data-model.md. Persisted via MMKV. Actions: createPreset (capture current performanceStore + quickToneSlots), updatePreset, deletePreset, reorder, setDefault, clearDefault. Ensure only one default.
-- [x] T060 [P] [US6] Write presets store tests in `__tests__/store/presetsStore.test.ts` — create, update, delete, reorder, single-default enforcement, quick-tone slot capture
-- [x] T061 [US6] Implement PresetService in `src/services/PresetService.ts` — applyPreset(): converts preset fields to DT1 messages via engine, sends batch via PianoService, restores quickToneSlots in appSettingsStore. captureCurrentState(): reads performanceStore + appSettingsStore → Preset object.
-- [x] T062 [US6] Implement usePresets hook in `src/hooks/usePresets.ts` — exposes presets list, createPreset, applyPreset, deletePreset, renamePreset, setDefault
-- [x] T063 [US6] Implement PresetCard in `src/screens/presets/PresetCard.tsx` — shows preset name, default badge, tone name. Tap → apply. Swipe/long-press → rename/delete/set default. NativeWind.
-- [x] T064 [US6] Implement PresetsScreen in `src/screens/presets/PresetsScreen.tsx` — list of PresetCards with reordering. "New Preset" button captures current state. Default preset badge.
-- [x] T065 [US6] Wire default preset auto-apply into ConnectionService — on first connection (isFirstConnectionThisSession), check for default preset, apply via PresetService, then mark isFirstConnectionThisSession = false. Skip on reconnection.
-
-**Checkpoint**: Phase 2 complete. Favorites, quick-tone slots, and presets all working. Default preset auto-applies.
+**Checkpoint**: Import picks real files, shows conflict UI, merges correctly. Reorder works via drag-and-drop and persists.
 
 ---
 
-## Phase 9: User Story 7 — Real-Time Chord Tracker (P1, Phase 3)
+## Phase 8: RS6 — NativeWind Migration (A5)
 
-**Goal**: Display chords from Note On/Off. Held-notes set model.
+**Goal**: Migrate from inline StyleSheet.create to NativeWind className props. Install React Native Reusables. Constitutional mandate (Principles III, VII).
 
-**Independent Test**: Connect, play C-E-G → shows "C". Release E → updates. Play C-Eb-G → shows "Cm".
+**Independent Test**: Each migrated screen renders identically to before (visual regression). No `StyleSheet.create` in migrated files. `className` props used throughout.
 
-### Implementation
+**Finding**: A5 (Constitution UI Stack — CRITICAL)
 
-- [x] T066 [P] [US7] Implement ChordService in `src/services/ChordService.ts` — held-notes Set, addNote/removeNote, analyzeChord() (pitch class intervals, match templates for major/minor/dim/aug/7th chords), getChordName(). Subscribe to noteOn/noteOff from PianoService notifications.
-- [x] T067 [P] [US7] Write chord detection tests in `__tests__/services/ChordService.test.ts` — C major (60,64,67), C minor (60,63,67), dim, aug, 7th chords, single note → note name, 2 notes → interval, non-chord → individual notes, empty → clear
-- [x] T068 [US7] Implement useChord hook in `src/hooks/useChord.ts` — subscribes to ChordService, exposes current chord name + held notes
-- [x] T069 [US7] Implement ChordDisplay in `src/screens/display/ChordDisplay.tsx` — large chord name display area. LCD font. Updates in real time. Shows note names when no chord recognized.
-- [x] T070 [US7] Integrate ChordDisplay into DisplayScreen — place in center/right area of landscape layout.
+### Foundation
 
-**Checkpoint**: Live chord detection working on physical piano.
+- [ ] T033 [RS6] Verify NativeWind v4 configuration is functional — check `tailwind.config.js` content path includes `src/**/*.{ts,tsx}`. Verify `babel.config.js` has NativeWind plugin. Verify `global.css` imports Tailwind layers (`@tailwind base; @tailwind components; @tailwind utilities;`). Verify `metro.config.js` has NativeWind transform. Fix any missing pieces.
+- [ ] T034 [RS6] Convert `src/theme/colors.ts` to NativeWind-compatible format — export palette values as CSS custom properties in `global.css` (`:root { --color-steel-100: #...; }` and `.dark { --color-steel-100: #...; }`). Extend `tailwind.config.js` colors with custom names mapping to CSS vars: `steel: { 100: 'var(--color-steel-100)', ... }`. Keep the TypeScript exports for any programmatic use but mark as secondary.
+- [ ] T035 [RS6] Convert `src/theme/typography.ts` to NativeWind font families — extend `tailwind.config.js` `fontFamily` with `orbitron: ['Orbitron-Regular']` and `orbitron-bold: ['Orbitron-Bold']`. Create NativeWind utility classes: `font-orbitron`, `font-orbitron-bold`. Remove or deprecate `TextStyle` exports that duplicate NativeWind classes.
 
----
+### Screen Migration
 
-## Phase 10: User Story 8 — Split and Dual Mode Control (P2, Phase 3)
+- [ ] T036 [P] [RS6] Migrate `src/screens/display/StatusBar.tsx` to NativeWind className props — replace all `style={{...}}` with `className="..."`. Replace conditional styles with NativeWind conditional classes. Replace theme color lookups with NativeWind CSS variable classes (e.g., `bg-steel-100 dark:bg-black`). Remove `StyleSheet.create` if present.
+- [ ] T037 [P] [RS6] Migrate `src/screens/display/DisplayScreen.tsx` to NativeWind className props — same pattern as T036. Replace inline flex/layout styles with NativeWind utilities (`flex-1`, `flex-row`, `justify-between`, etc.).
+- [ ] T038 [P] [RS6] Migrate `src/screens/display/ToneSelector.tsx` to NativeWind className props
+- [ ] T039 [P] [RS6] Migrate `src/components/StepperControl.tsx` to NativeWind className props
+- [ ] T040 [P] [RS6] Migrate `src/screens/presets/PresetCard.tsx` to NativeWind className props
+- [ ] T041 [P] [RS6] Migrate `src/screens/presets/PresetsScreen.tsx` to NativeWind className props
+- [ ] T042 [P] [RS6] Migrate modals to NativeWind — `src/components/modals/TempoModal.tsx`, `src/components/modals/BeatModal.tsx`, `src/components/modals/VolumeOverlay.tsx`
+- [ ] T043 [P] [RS6] Migrate tone modals to NativeWind — `src/components/modals/TonePickerModal.tsx`, `src/components/modals/CategoryPickerModal.tsx`
+- [ ] T044 [P] [RS6] Migrate remaining components to NativeWind — `src/screens/pads/PadsScreen.tsx`, `src/screens/display/ChordDisplay.tsx`, `src/screens/display/QuickToneSlots.tsx`, `src/components/ConnectionIndicator.tsx`, `src/app/TabNavigator.tsx`
 
-**Goal**: Set voice mode (Single/Split/Dual), per-voice tones, split point, balance.
-
-**Independent Test**: Set Split mode, Piano right + Bass left, split at F#3. Verify piano responds.
-
-### Implementation
-
-- [x] T071 [US8] Add Split/Dual DT1 builders to FP30XEngine — buildVoiceModeChange(), buildLeftToneChange(), buildSplitPointChange(), buildBalanceChange(), per discovery doc addresses (01 00 02 00–06, 0A–0C, 16–17)
-- [x] T072 [US8] Add voice mode controls to DisplayScreen — mode selector (Single/Split/Dual), secondary tone selector for left/Tone2, split point setter, balance slider
-- [x] T073 [US8] Wire Split/Dual configuration into PresetService — presets capture and restore voice mode parameters
-
-**Checkpoint**: Split/Dual modes functional.
+**Checkpoint**: All screens use NativeWind className props. No inline StyleSheet patterns remain. React Native Reusables installed and available. WCAG AA contrast preserved.
 
 ---
 
-## Phase 11: User Story 9 — Keyboard Transpose and Key Touch (P3, Phase 3)
+## Phase 9: Polish & Cross-Cutting Concerns
 
-**Goal**: Transpose control (-6 to +5), key touch sensitivity (6 levels).
+**Purpose**: Missing tests, spec cleanup, task reconciliation, final validation.
 
-### Implementation
+### Tests
 
-- [x] T074 [US9] Add transpose + key touch DT1 builders to FP30XEngine — buildTransposeChange(value), buildKeyTouchChange(level), per addresses 01 00 03 07 and 01 00 02 1D
-- [x] T075 [US9] Add transpose display to StatusBar — shows current transpose value, tap opens transpose control
-- [x] T076 [US9] Add Key Touch selector to a settings panel — 6 levels (Fix through Super Heavy)
+- [ ] T045 Write `__tests__/services/ConnectionService.test.ts` (A12) — mock BleTransport (send, subscribe, connect) and engine registry. Test: scan triggers transport.scan with timeout, connect flow calls discoverServices + subscribeNotifications + sendRQ1, disconnect cleans up subscriptions + clears interval, auto-reconnect retries up to max (5) with delay (2s), `isFirstConnectionThisSession` distinction (first connect vs reconnect), default preset auto-apply on first connect only.
 
-**Checkpoint**: Phase 3 complete.
+### Spec & Task Reconciliation
 
----
+- [ ] T046 [P] Fix spec.md Phase 5 TODO placeholders (A14) — replace "Further refinements TODO" at line 293 with concrete acceptance details for import conflict resolution (rename/replace/skip per A10 remediation) or mark as "covered by acceptance scenarios 1–3 above."
+- [ ] T047 Reconcile task completion status — review all 89 original tasks against actual implementation. Unmark tasks that were completed without artifacts: T030 (ConnectionService test — no test file exists), T084 (import — was a stub), T086-T089 (quality tasks — no evidence artifacts). After remediation is complete, re-verify and re-mark.
 
-## Phase 12: User Story 10 — Assignable Performance Pads (P1, Phase 4)
+### Final Validation
 
-**Goal**: Grid of macro buttons that send configured command sequences.
-
-### Implementation
-
-- [x] T077 [US10] Design pad data model — PadConfig (id, label, commands: DT1Command[]). Store in padConfigStore.
-- [x] T078 [US10] Implement PadsScreen in `src/screens/pads/PadsScreen.tsx` — grid of pad buttons. Tap → execute commands. Long-press → configure.
-- [x] T079 [US10] Implement pad configuration dialog — assign DT1 command sequences (volume, tone, mode, metronome toggle, etc.)
-
-**Checkpoint**: Pads functional.
-
----
-
-## Phase 13: User Story 11 — Full Metronome Control (P2, Phase 4)
-
-**Goal**: Complete metronome parameter control (beat, pattern, volume, tone).
-
-### Implementation
-
-- [x] T080 [US11] Extend BeatModal to include pattern, volume (0–10), and tone (Click/Electronic/Japanese/English) selectors
-- [x] T081 [US11] Wire all metronome params through PianoService → engine buildMetronomeParam() → transport send
-
-**Checkpoint**: Phase 4 complete.
-
----
-
-## Phase 14: User Story 12 — Export and Import Presets (P1, Phase 5)
-
-**Goal**: Export presets to shareable file. Import with conflict resolution.
-
-### Implementation
-
-- [x] T082 [US12] Define preset file format (JSON with version header + array of Preset objects)
-- [x] T083 [US12] Implement export: serialize presets → JSON → share via system share sheet (`react-native-share` or Share API)
-- [x] T084 [US12] Implement import: receive file → parse JSON → conflict detection (same name) → prompt rename/replace/skip → merge into presetsStore
-- [x] T085 [US12] Add export/import buttons to PresetsScreen
-
-**Checkpoint**: Phase 5 complete.
-
----
-
-## Phase 15: Polish & Cross-Cutting Concerns
-
-**Purpose**: Quality, performance, accessibility.
-
-- [x] T086 [P] Run ESLint + Prettier across entire codebase — zero warnings
-- [x] T087 [P] WCAG AA contrast audit — verify all text meets contrast ratios in both light and dark themes
-- [x] T088 Physical device test session — full end-to-end: connect, browse tones, change via all 3 modes, verify undo, status bar interactions, presets, favorites, disconnect/reconnect
-- [x] T089 Performance profiling — verify 60 FPS during tone browsing, < 200ms tone selection, < 500ms preset apply
+- [ ] T048 Run ESLint + TypeScript build validation — `npm run lint && npx tsc --noEmit`. Zero errors required. Fix any issues introduced by remediation changes.
+- [ ] T049 Physical device test session on iOS — connect to FP-30X, verify: (1) bootstrap wires services (no null early-returns), (2) RQ1 populates real state, (3) tone changes send DT1, (4) piano notifications update UI, (5) category +/- applies first tone, (6) pending queue works on reconnect, (7) import/export round-trips correctly, (8) preset reorder persists, (9) NativeWind styling renders correctly in both light/dark modes.
 
 ---
 
@@ -299,104 +201,109 @@
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies — start immediately
-- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all user stories
-- **US1 Connect (Phase 3)**: Depends on Foundational — first story to implement
-- **US2 Tones (Phase 4)**: Depends on US1 (needs connection to send DT1)
-- **US3 Status Bar (Phase 5)**: Depends on US1 (needs connection + notifications)
-- **US4 Favorites (Phase 6)**: Depends on US2 (needs tone selection working)
-- **US5 Quick Tones (Phase 7)**: Depends on US4 (needs favorites)
-- **US6 Presets (Phase 8)**: Depends on US1 + US5 (needs connection + quick-tone slots)
-- **US7 Chord (Phase 9)**: Depends on US1 (needs Note On/Off notifications)
-- **US8 Split/Dual (Phase 10)**: Depends on US2 (needs tone selection)
-- **US9 Transpose (Phase 11)**: Depends on US1 (needs DT1 send)
-- **US10-12**: Depend on earlier phases as noted
-- **Polish (Phase 15)**: Depends on all desired stories complete
+- **Foundational (Phase 2)**: No dependencies — start immediately (parallel with Phase 1)
+- **RS1 State Sync (Phase 3)**: Depends on Phase 2 (bootstrap must be wired)
+- **RS2 Layer Fixes (Phase 4)**: No dependencies — start immediately (parallel with Phases 1–3)
+- **RS3 Protocol (Phase 5)**: No dependencies — start immediately (parallel with Phases 1–4)
+- **RS4 Tone/Queue (Phase 6)**: Depends on Phase 2 (needs service bootstrap for PianoService)
+- **RS5 Import/Reorder (Phase 7)**: Depends on Phase 1 (needs dependencies installed)
+- **RS6 NativeWind (Phase 8)**: No dependencies — start immediately (parallel with all phases)
+- **Polish (Phase 9)**: Depends on Phases 2–8 completion
 
-### User Story Dependencies
+### Remediation Story Dependencies
 
 ```
-Setup → Foundational → US1 (Connect) ──→ US2 (Tones) ──→ US4 (Favorites) → US5 (Quick Tones) → US6 (Presets)
-                          │                    │
-                          ├──→ US3 (Status Bar) │
-                          ├──→ US7 (Chord)      │
-                          └──→ US9 (Transpose)  │
-                                                └──→ US8 (Split/Dual)
+Phase 1 (Deps) ─────────────────────────────→ Phase 7 (Import/Reorder)
+                                                      │
+Phase 2 (Bootstrap) ──→ Phase 3 (State Sync) ────────┤
+       │                                              │
+       └──────────→ Phase 6 (Tone/Queue) ─────────────┤
+                                                      │
+Phase 4 (Layer Fixes) ────────────────────────────────┤  ← all independent
+Phase 5 (Protocol) ───────────────────────────────────┤  ← all independent
+Phase 8 (NativeWind) ─────────────────────────────────┤  ← independent
+                                                      │
+                                           Phase 9 (Polish)
 ```
 
-### Within Each User Story
+### Within Each Remediation Story
 
-- Tests FIRST (TDD) for pure-logic tasks
-- Types/interfaces before implementations
-- Services before screens
-- Core before integration
+- Tests FIRST (TDD) for pure-logic tasks (parser, framing, service)
+- Fix infrastructure before UI
+- Verify after each task (run affected tests, check for regressions)
 
 ### Parallel Opportunities
 
-- **Phase 2**: T006–T008, T010, T012, T014, T017, T019, T020–T027 are all [P] — different files
-- **Phase 3 (US1)**: T030 test can run in parallel with T031 scanner
-- **Phase 4 (US2)**: T038 hook, T039 stepper, T041 category picker, T042 tone picker can overlap
-- **Phase 6 (US4)**: T051 store + T052 tests in parallel
-- **Phase 8 (US6)**: T059 store + T060 tests in parallel
+- **Phase 1**: T001, T002, T003 are all [P] — different packages
+- **Phase 2**: T004-T007 are sequential (bootstrap → App.tsx → ConnectionService wiring)
+- **Phase 4**: T012, T013 are [P] — different screen files
+- **Phase 5**: T016, T017 are [P] — different test files
+- **Phase 8**: T036-T044 are all [P] — different screen/component files (after T033-T035 complete)
+- **Cross-phase**: Phases 1, 2, 4, 5, 8 can all start simultaneously
 
 ---
 
-## Parallel Example: Foundational Phase
+## Parallel Example: Maximum Concurrency
 
 ```
-# All these can run simultaneously (different files):
-T006: engine/types.ts
-T007: engine/fp30x/constants.ts
-T008: engine/fp30x/addresses.ts
-T017: transport/types.ts
-T020: store/storage.ts
-T021: store/connectionStore.ts
-T022: store/performanceStore.ts
-T023: store/appSettingsStore.ts
-T025: theme/colors.ts
-T026: theme/typography.ts
-T027: theme/spacing.ts
+# These can ALL run simultaneously (different files, no dependencies):
 
-# Then sequentially (dependencies):
-T009: sysex.ts (depends on T007, T008)
-T010: sysex tests
-T011: tones.ts (depends on T006)
-T013: parser.ts (depends on T007, T008)
-T015: FP30XEngine.ts (depends on T009, T011, T013)
-T018: framing.ts (depends on T017)
-T028: TabNavigator.tsx (depends on T025, T026)
-T029: App.tsx (depends on T028)
+Phase 1:  T001 (install reusables), T002 (install doc-picker), T003 (install draggable-flatlist)
+Phase 2:  T004 (bootstrap.ts) — then T005 (App.tsx) sequentially
+Phase 4:  T012 (PresetCard fix), T013 (QuickToneSlots fix)
+Phase 5:  T016 (running status test), T017 (CC/PC echo test)
+Phase 8:  T033 (NativeWind config verify)
+
+# After Phase 2 checkpoint:
+Phase 3:  T010 (RQ1 routing)
+Phase 6:  T022 (category +/-)
+
+# After Phase 8 T033-T035 complete:
+Phase 8:  T036-T044 all in parallel (each a different file)
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (Phase 1 Core Display = US1 + US2 + US3)
+### Critical Path First (Phases 2 + 3 = App Actually Works)
 
-1. Complete Setup (T001–T005)
-2. Complete Foundational (T006–T029) — CRITICAL GATE
-3. Complete US1 Connect (T030–T037) — can now talk to piano
-4. Complete US2 Tones (T038–T044) — core value proposition
-5. Complete US3 Status Bar (T045–T050) — live feedback
-6. **STOP and VALIDATE on physical device**
+1. Complete Phase 2: Service Bootstrap (T004–T008) — **CRITICAL GATE**
+2. Complete Phase 3: State Sync (T009–T011) — app now reads real piano state
+3. **STOP and VALIDATE**: Connect to FP-30X. Verify tone selector shows real tone, status bar shows real tempo/volume. If this fails, everything else is moot.
 
 ### Incremental Delivery
 
-- Setup + Foundational → Foundation ready
-- US1 → Can connect (validates entire engine/transport stack)
-- US2 → Can browse + select tones (core feature, testable)
-- US3 → Can see + control status (complete Phase 1)
-- US4–US6 → Favorites + presets (Phase 2, the differentiator)
-- US7–US9 → Chord + Split/Dual + Transpose (Phase 3, advanced)
-- US10–US12 → Pads + Metronome + Import/Export (Phases 4-5)
+1. Phase 2 (Bootstrap) → App can connect and send commands
+2. Phase 3 (State Sync) → App reads real piano state on connect
+3. Phase 4 (Layer Fixes) → Architecture compliant
+4. Phase 5 (Protocol) → Robust MIDI parsing
+5. Phase 6 (Tone/Queue) → Feature-complete tone selection
+6. Phase 7 (Import/Reorder) → Feature-complete presets
+7. Phase 8 (NativeWind) → Constitution-compliant UI stack
+8. Phase 9 (Polish) → Quality verified
+
+### Severity-Ordered Priority
+
+| Priority | Phases | Findings | Effort |
+|----------|--------|----------|--------|
+| 1 — CRITICAL | 2, 3 | A1, A2, A3 | Small (5 tasks) |
+| 2 — CRITICAL | 4 | A4 | Small (4 tasks) |
+| 3 — HIGH | 5 | A6, A7 | Medium (6 tasks) |
+| 4 — HIGH | 6 | A8, A9 | Medium (5 tasks) |
+| 5 — HIGH | 7 | A10, A11 | Medium (6 tasks) |
+| 6 — CRITICAL (large) | 8 | A5 | Large (12 tasks) |
+| 7 — HIGH/LOW | 9 | A12, A13, A14 | Small (5 tasks) |
 
 ---
 
 ## Notes
 
 - [P] tasks = different files, no dependencies
-- [USn] label maps task to specific user story
-- TDD mandatory for pure-logic modules (engine, parser, stores)
+- [RS*] label maps task to remediation story for traceability
+- Finding IDs (A1–A14) reference `codereview.md` entries
+- TDD mandatory for pure-logic modules (parser, framing, services)
 - Physical device testing required for all BLE features
-- Commit after each task or logical group, referencing task ID
-- All DT1 byte values reference `docs/roland-sysex-discovery.md`
+- Commit after each task or logical group, referencing task ID + finding ID (e.g., `T004 (A1): Create service bootstrap`)
+- All remediation changes reference `docs/roland-sysex-discovery.md` for protocol details
+- Run `npm run lint && npx tsc --noEmit` after each phase checkpoint

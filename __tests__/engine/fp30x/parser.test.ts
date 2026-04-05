@@ -195,18 +195,66 @@ describe('parseNotification', () => {
       expect(parseNotification([])).toBeNull();
     });
 
-    it('returns null for CC messages', () => {
-      // CC 7 (volume) on channel 1
-      expect(parseNotification([0xb0, 0x07, 0x64])).toBeNull();
-    });
-
-    it('returns null for Program Change', () => {
-      expect(parseNotification([0xc0, 0x10])).toBeNull();
-    });
-
     it('returns null for non-DT1 SysEx', () => {
       // GM2 System On
       expect(parseNotification([0xf0, 0x7e, 0x7f, 0x09, 0x03, 0xf7])).toBeNull();
+    });
+  });
+
+  /**
+   * T017: CC/PC echo parser tests.
+   *
+   * Control Change and Program Change messages echoed from the piano
+   * should be parsed into typed events, not silently discarded.
+   */
+
+  describe('Control Change parsing', () => {
+    it('parses CC volume (controller 7) on channel 0', () => {
+      const bytes = [0xb0, 0x07, 0x64]; // CC ch0, controller 7, value 100
+      const event = parseNotification(bytes);
+      expect(event).not.toBeNull();
+      expect(event).toEqual({
+        type: 'controlChange',
+        channel: 0,
+        controller: 7,
+        value: 100,
+      });
+    });
+
+    it('parses CC pan (controller 10) on channel 1', () => {
+      const bytes = [0xb1, 0x0a, 0x40]; // CC ch1, controller 10, value 64
+      const event = parseNotification(bytes);
+      expect(event).not.toBeNull();
+      expect(event).toEqual({
+        type: 'controlChange',
+        channel: 1,
+        controller: 10,
+        value: 64,
+      });
+    });
+  });
+
+  describe('Program Change parsing', () => {
+    it('parses Program Change on channel 0', () => {
+      const bytes = [0xc0, 0x05]; // PC ch0, program 5
+      const event = parseNotification(bytes);
+      expect(event).not.toBeNull();
+      expect(event).toEqual({
+        type: 'programChange',
+        channel: 0,
+        program: 5,
+      });
+    });
+
+    it('parses Program Change on channel 2', () => {
+      const bytes = [0xc2, 0x10]; // PC ch2, program 16
+      const event = parseNotification(bytes);
+      expect(event).not.toBeNull();
+      expect(event).toEqual({
+        type: 'programChange',
+        channel: 2,
+        program: 16,
+      });
     });
   });
 });
@@ -287,5 +335,28 @@ describe('parseStateResponse', () => {
 
   it('returns empty array for non-DT1 input', () => {
     expect(parseStateResponse([0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7])).toEqual([]);
+  });
+});
+
+// T017 (A7): CC/PC echo handling tests
+describe('parseNotification CC/PC echoes', () => {
+  it('parses CC volume (controller 7) on channel 0', () => {
+    const event = parseNotification([0xb0, 0x07, 0x64]);
+    expect(event).toEqual({type: 'controlChange', channel: 0, controller: 7, value: 100});
+  });
+
+  it('parses CC pan (controller 10) on channel 1', () => {
+    const event = parseNotification([0xb1, 0x0a, 0x40]);
+    expect(event).toEqual({type: 'controlChange', channel: 1, controller: 10, value: 64});
+  });
+
+  it('parses Program Change on channel 0', () => {
+    const event = parseNotification([0xc0, 0x05]);
+    expect(event).toEqual({type: 'programChange', channel: 0, program: 5});
+  });
+
+  it('parses Program Change on channel 2', () => {
+    const event = parseNotification([0xc2, 0x10]);
+    expect(event).toEqual({type: 'programChange', channel: 2, program: 16});
   });
 });

@@ -200,3 +200,7 @@ npm run dev            # Start Metro bundler
 ## Implementation Progress
 
 V2 architecture rebuild in progress. V1 code (T001-T059) will be restructured to match the new layered architecture (engine/ + transport/ + services/). The CC/PC MIDI encoder and old feature/ structure are being replaced.
+
+## Recent Changes
+
+- Code review remediation in progress — see `specs/002-fp30x-controller-v2/codereview.md` for findings and `plan.md` for remediation plan.

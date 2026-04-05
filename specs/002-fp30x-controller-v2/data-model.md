@@ -325,6 +325,81 @@ interface AppSettings {
 }
 ```
 
+### ServiceBootstrap
+
+Module-level initialization that wires all services before the React tree mounts. Added during code review remediation to resolve A1 (bootstrap integration) and A2 (engine wiring).
+
+```typescript
+/**
+ * Initializes and wires all application services.
+ * Must be called once before the first React render.
+ * Idempotent — safe to call multiple times.
+ */
+interface ServiceBootstrap {
+  /** Whether bootstrap has already run */
+  initialized: boolean;
+  
+  /** 
+   * Create service instances and wire them:
+   * 1. Instantiate BleTransport, PianoService, ConnectionService
+   * 2. Wire ConnectionService → PianoService (engine relay, notifications)
+   * 3. Wire hooks (setConnectionService, setPianoService)
+   */
+  bootstrap(): void;
+}
+```
+
+**Lifecycle**:
+```
+App module loads → bootstrap() → services instantiated → hooks wired → React tree mounts
+                                      ↓
+                              ConnectionService
+                                ├── owns BleTransport
+                                ├── setPianoService(pianoService)
+                                ├── setNotificationHandler(pianoService.handleNotification)
+                                └── on connect:
+                                    ├── engine = registry.getEngine(identity)
+                                    ├── pianoService.setEngine(engine)
+                                    ├── sends RQ1 requests
+                                    └── parses responses → dispatches to stores
+```
+
+**Key constraint**: bootstrap() runs synchronously at module load time (before `AppRegistry.registerComponent`). This ensures hooks never see null service references.
+
+---
+
+### ConflictResolution (Phase E-3 addition)
+
+When importing presets with duplicate names, the user must choose a resolution strategy per conflict.
+
+```typescript
+type ConflictStrategy = 'rename' | 'replace' | 'skip';
+
+interface ImportConflict {
+  /** The imported preset that conflicts */
+  importedPreset: Preset;
+  /** The existing preset it conflicts with */
+  existingPreset: Preset;
+  /** User's chosen resolution */
+  resolution?: ConflictStrategy;
+}
+
+interface ImportResult {
+  /** Number of presets successfully imported */
+  imported: number;
+  /** Number of presets skipped */
+  skipped: number;
+  /** Number of presets replaced */
+  replaced: number;
+  /** Number of presets renamed */
+  renamed: number;
+}
+```
+
+**Flow**: `PresetService.detectConflicts(presets)` → `ImportConflict[]` → UI shows modal per conflict → user selects strategy → `PresetService.resolveImport(conflicts)` → `ImportResult`.
+
+---
+
 ## Relationships
 
 ```

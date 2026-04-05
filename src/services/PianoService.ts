@@ -11,7 +11,7 @@
 import type {Transport} from '../transport/types';
 import type {PianoEngine, Tone, NotificationEvent} from '../engine/types';
 import {usePerformanceStore} from '../store/performanceStore';
-import {getChordService} from '../hooks/useChord';
+import {getChordService} from './ChordService';
 
 /** Debounce timeout for rapid input (ms). */
 const DEBOUNCE_MS = 50;
@@ -103,6 +103,14 @@ export class PianoService {
         chordSvc.removeNote(event.note);
         break;
       }
+      case 'controlChange':
+        // T021 (A7): CC echoes are informational only over BLE — log, don't update stores
+        console.debug(`CC echo: ch=${event.channel} cc=${event.controller} val=${event.value}`);
+        break;
+      case 'programChange':
+        // T021 (A7): PC echoes are informational only over BLE — log, don't update stores
+        console.debug(`PC echo: ch=${event.channel} pc=${event.program}`);
+        break;
       case 'unknown':
         // Logged but not acted on
         break;

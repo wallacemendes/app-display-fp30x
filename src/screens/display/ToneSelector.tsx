@@ -41,6 +41,7 @@ export function ToneSelector(): React.JSX.Element {
     selectTone,
     undo,
     searchByName,
+    searchByNumber,
   } = useTones();
 
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -203,6 +204,7 @@ export function ToneSelector(): React.JSX.Element {
         activeTone={activeTone}
         onSelectTone={selectTone}
         searchByName={searchByName}
+        searchByNumber={searchByNumber}
       />
     </View>
   );

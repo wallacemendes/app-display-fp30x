@@ -42,6 +42,8 @@ interface TonePickerModalProps {
   onSelectTone: (tone: Tone) => void;
   /** Search function (from useTones) */
   searchByName: (query: string) => Tone[];
+  /** Cross-category number search (from useTones) */
+  searchByNumber?: (num: number) => Tone | undefined;
 }
 
 export function TonePickerModal({
@@ -52,6 +54,7 @@ export function TonePickerModal({
   activeTone,
   onSelectTone,
   searchByName,
+  searchByNumber,
 }: TonePickerModalProps): React.JSX.Element {
   const colors = useThemeColors();
   const isDark = useIsDark();
@@ -77,14 +80,20 @@ export function TonePickerModal({
     // Check if query is a number (search by position)
     const asNumber = parseInt(deferredSearch, 10);
     if (!isNaN(asNumber) && deferredSearch.trim() === String(asNumber)) {
-      // Search by 1-based number within current category
-      const tone = currentCategory.tones[asNumber - 1];
-      if (tone) return [tone];
-      // Fallback to name search
+      // T023 (A9): Cross-category number search (FR-012b)
+      if (searchByNumber) {
+        const tone = searchByNumber(asNumber - 1); // 0-based internally
+        if (tone) return [tone];
+      } else {
+        // Fallback: search within current category only
+        const tone = currentCategory.tones[asNumber - 1];
+        if (tone) return [tone];
+      }
+      // Fallback to name search if number not found
     }
 
     return searchByName(deferredSearch);
-  }, [deferredSearch, searchByName, currentCategory.tones]);
+  }, [deferredSearch, searchByName, searchByNumber, currentCategory.tones]);
 
   // ─── Tab Data ──────────────────────────────────────────────
 

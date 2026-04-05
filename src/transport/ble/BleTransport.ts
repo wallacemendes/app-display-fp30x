@@ -83,10 +83,23 @@ export class BleTransport implements Transport {
     this._status = 'connecting';
     try {
       this.device = await connectToDevice(this.manager, deviceId);
+
+      // T018 (A6): Validate MIDI characteristic properties
+      await this.validateMidiCharacteristic();
+
       this._status = 'connected';
       this.setupMonitor();
       this.setupDisconnectListener(deviceId);
     } catch (error) {
+      // If validation failed, ensure we disconnect cleanly
+      if (this.device) {
+        try {
+          await this.device.cancelConnection();
+        } catch {
+          // Already disconnected or never fully connected
+        }
+        this.device = null;
+      }
       this._status = 'disconnected';
       throw error;
     }
@@ -137,6 +150,46 @@ export class BleTransport implements Transport {
   }
 
   // ─── Private ────────────────────────────────────────────────
+
+  /**
+   * T018 (A6): Validate that the MIDI characteristic has the required
+   * BLE properties (write-without-response + notify).
+   */
+  private async validateMidiCharacteristic(): Promise<void> {
+    if (!this.device) {
+      throw new Error('No device connected');
+    }
+
+    const services = await this.device.services();
+    const midiService = services.find(
+      s => s.uuid.toUpperCase() === BLE_MIDI_SERVICE_UUID.toUpperCase(),
+    );
+    if (!midiService) {
+      throw new Error('BLE MIDI service not found on device');
+    }
+
+    const characteristics = await midiService.characteristics();
+    const midiChar = characteristics.find(
+      c => c.uuid.toUpperCase() === BLE_MIDI_CHAR_UUID.toUpperCase(),
+    );
+    if (!midiChar) {
+      throw new Error('BLE MIDI characteristic not found on device');
+    }
+
+    const missing: string[] = [];
+    if (!midiChar.isWritableWithoutResponse) {
+      missing.push('isWritableWithoutResponse');
+    }
+    if (!midiChar.isNotifiable) {
+      missing.push('isNotifiable');
+    }
+
+    if (missing.length > 0) {
+      throw new Error(
+        `BLE MIDI characteristic missing required properties: ${missing.join(', ')}`,
+      );
+    }
+  }
 
   private setupMonitor(): void {
     if (!this.device) return;

@@ -14,10 +14,13 @@ import {View, Text, Pressable, Alert} from 'react-native';
 import type {Preset} from '../../store/presetsStore';
 import {useThemeColors} from '../../hooks/useThemeColors';
 import {typography} from '../../theme/typography';
-import {fp30xToneCatalog} from '../../engine/fp30x/tones';
 
 interface PresetCardProps {
   preset: Preset;
+  /** Resolved tone name (resolved by parent via hook, not engine import) */
+  toneName: string;
+  /** Resolved category name */
+  categoryName: string;
   onApply: (preset: Preset) => void;
   onRename: (id: string) => void;
   onDelete: (id: string) => void;
@@ -27,6 +30,8 @@ interface PresetCardProps {
 
 export function PresetCard({
   preset,
+  toneName,
+  categoryName,
   onApply,
   onRename,
   onDelete,
@@ -34,15 +39,6 @@ export function PresetCard({
   onClearDefault,
 }: PresetCardProps): React.JSX.Element {
   const colors = useThemeColors();
-
-  // Resolve the tone name from the catalog using DT1 bytes
-  const resolvedTone = fp30xToneCatalog.findByDT1(
-    preset.tone.category,
-    preset.tone.indexHigh,
-    preset.tone.indexLow,
-  );
-  const toneName = resolvedTone?.name ?? 'Unknown Tone';
-  const categoryName = resolvedTone?.categoryName ?? '';
 
   const handlePress = useCallback(() => {
     onApply(preset);

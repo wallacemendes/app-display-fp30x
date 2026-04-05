@@ -83,6 +83,7 @@ export function stripBleFraming(blePacket: number[]): number[][] {
 
   const messages: number[][] = [];
   let i = 1; // Skip header byte
+  let lastStatusByte = 0;
 
   while (i < blePacket.length) {
     // Skip timestamp byte
@@ -94,6 +95,9 @@ export function stripBleFraming(blePacket: number[]): number[][] {
 
     // SysEx start
     if (blePacket[i] === 0xf0) {
+      // T019 (A7): SysEx resets running status
+      lastStatusByte = 0;
+
       const sysex: number[] = [0xf0];
       i++; // skip F0
 
@@ -115,10 +119,15 @@ export function stripBleFraming(blePacket: number[]): number[][] {
       if (sysex.length > 1) {
         messages.push(sysex);
       }
-    } else {
-      // Standard MIDI message
+    } else if ((blePacket[i] & 0x80) !== 0) {
+      // Standard MIDI message with explicit status byte
       const status = blePacket[i];
       const msgType = status & 0xf0;
+
+      // T019 (A7): Save status for running status (channel messages only)
+      if (msgType >= 0x80 && msgType <= 0xe0) {
+        lastStatusByte = status;
+      }
 
       if (msgType === 0xc0 || msgType === 0xd0) {
         // Program Change / Channel Pressure: 2 bytes
@@ -137,7 +146,29 @@ export function stripBleFraming(blePacket: number[]): number[][] {
           i++;
         }
       } else {
-        // Unknown or running status — skip
+        // System messages (0xF0-0xFF) other than SysEx — skip
+        i++;
+      }
+    } else {
+      // T019 (A7): Running status — data byte without a status byte
+      if (lastStatusByte >= 0x80 && lastStatusByte <= 0xef) {
+        const msgType = lastStatusByte & 0xf0;
+
+        if (msgType === 0xc0 || msgType === 0xd0) {
+          // 2-byte message: status + 1 data byte
+          messages.push([lastStatusByte, blePacket[i]]);
+          i += 1;
+        } else {
+          // 3-byte message: status + 2 data bytes
+          if (i + 1 < blePacket.length) {
+            messages.push([lastStatusByte, blePacket[i], blePacket[i + 1]]);
+            i += 2;
+          } else {
+            i++;
+          }
+        }
+      } else {
+        // No valid running status — skip byte
         i++;
       }
     }

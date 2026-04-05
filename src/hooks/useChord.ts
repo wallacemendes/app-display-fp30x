@@ -5,17 +5,7 @@
  */
 
 import {useState, useEffect} from 'react';
-import {ChordService, type ChordResult} from '../services/ChordService';
-
-/** Singleton ChordService instance. */
-let chordService: ChordService | null = null;
-
-export function getChordService(): ChordService {
-  if (!chordService) {
-    chordService = new ChordService();
-  }
-  return chordService;
-}
+import {getChordService, type ChordResult} from '../services/ChordService';
 
 const EMPTY_RESULT: ChordResult = {name: '', root: null, noteCount: 0, notes: []};
 

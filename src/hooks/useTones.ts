@@ -34,18 +34,43 @@ export function useTones() {
     return categories[idx];
   }, [lastCategoryIndex, categories]);
 
+  // ─── Tone Selection ────────────────────────────────────────
+  // (declared before category/tone cycling so they can reference it)
+
+  const selectToneInternal = useCallback(
+    (tone: Tone) => {
+      // Optimistic UI update
+      usePerformanceStore.getState().setActiveTone(tone);
+      // Send DT1 via PianoService (debounced)
+      const service = getPianoService();
+      if (service) {
+        service.changeTone(tone);
+      }
+    },
+    [],
+  );
+
   // ─── Category Cycling ──────────────────────────────────────
 
+  // T022 (A9): Category +/- applies first tone of the new category (FR-012)
   const nextCategory = useCallback(() => {
     const nextIdx = (lastCategoryIndex + 1) % categories.length;
     setLastCategoryIndex(nextIdx);
-  }, [lastCategoryIndex, categories.length, setLastCategoryIndex]);
+    const firstTone = categories[nextIdx].tones[0];
+    if (firstTone) {
+      selectToneInternal(firstTone);
+    }
+  }, [lastCategoryIndex, categories, setLastCategoryIndex, selectToneInternal]);
 
   const prevCategory = useCallback(() => {
     const prevIdx =
       (lastCategoryIndex - 1 + categories.length) % categories.length;
     setLastCategoryIndex(prevIdx);
-  }, [lastCategoryIndex, categories.length, setLastCategoryIndex]);
+    const firstTone = categories[prevIdx].tones[0];
+    if (firstTone) {
+      selectToneInternal(firstTone);
+    }
+  }, [lastCategoryIndex, categories, setLastCategoryIndex, selectToneInternal]);
 
   // ─── Tone Cycling (within current category) ────────────────
 
@@ -61,7 +86,7 @@ export function useTones() {
     const nextIdx = (currentIdx + 1) % tones.length;
     const tone = tones[nextIdx];
     selectToneInternal(tone);
-  }, [currentCategory, activeTone]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentCategory, activeTone, selectToneInternal]);
 
   const prevTone = useCallback(() => {
     const tones = currentCategory.tones;
@@ -76,22 +101,7 @@ export function useTones() {
     const prevIdx = (currentIdx - 1 + tones.length) % tones.length;
     const tone = tones[prevIdx];
     selectToneInternal(tone);
-  }, [currentCategory, activeTone]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Tone Selection ────────────────────────────────────────
-
-  const selectToneInternal = useCallback(
-    (tone: Tone) => {
-      // Optimistic UI update
-      usePerformanceStore.getState().setActiveTone(tone);
-      // Send DT1 via PianoService (debounced)
-      const service = getPianoService();
-      if (service) {
-        service.changeTone(tone);
-      }
-    },
-    [],
-  );
+  }, [currentCategory, activeTone, selectToneInternal]);
 
   const selectTone = useCallback(
     (tone: Tone) => {
@@ -144,6 +154,21 @@ export function useTones() {
     [categories],
   );
 
+  // T012/T013 (A4): Tone resolution helpers for screens (avoids direct engine import)
+  const findToneByDT1 = useCallback(
+    (category: number, indexHigh: number, indexLow: number) => {
+      return catalog.findByDT1(category, indexHigh, indexLow);
+    },
+    [catalog],
+  );
+
+  const findToneById = useCallback(
+    (id: string) => {
+      return catalog.findById(id);
+    },
+    [catalog],
+  );
+
   return {
     categories,
     currentCategory,
@@ -157,5 +182,7 @@ export function useTones() {
     undo,
     searchByName,
     searchByNumber,
+    findToneByDT1,
+    findToneById,
   };
 }

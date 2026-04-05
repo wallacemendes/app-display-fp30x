@@ -3,6 +3,7 @@
  *
  * T029: NativeWind provider, navigation container, theme provider,
  * wake lock (react-native-keep-awake).
+ * T005 (A1): Service bootstrap — wires services before React mounts.
  *
  * Constitution III: Landscape Hardware-Synth UI.
  */
@@ -16,6 +17,11 @@ import {NavigationContainer} from '@react-navigation/native';
 import {useKeepAwake} from 'react-native-keep-awake';
 import {TabNavigator} from './src/app/TabNavigator';
 import {useAppSettingsStore} from './src/store/appSettingsStore';
+import {bootstrap} from './src/app/bootstrap';
+
+// Wire all services before any React component mounts.
+// This ensures hooks never see null service references.
+bootstrap();
 
 function App(): React.JSX.Element {
   const systemScheme = useColorScheme();

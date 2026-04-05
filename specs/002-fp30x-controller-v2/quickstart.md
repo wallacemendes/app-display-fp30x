@@ -5,11 +5,32 @@ How to navigate the architecture and start working on a feature.
 ## Architecture at a Glance
 
 ```
+bootstrap.ts → creates + wires services (runs once before React mounts)
+     ↓
 screens/ → hooks/ → services/ → engine/ + transport/ → store/
    UI         bridge    orchestration    domain + infra     state
 ```
 
 **Rule**: Each layer only talks to the layer below it. Screens never import from engine/ or transport/.
+
+## Service Bootstrap (CRITICAL — must understand this first)
+
+Before any React component mounts, `src/app/bootstrap.ts` runs:
+
+```
+bootstrap()
+  1. new BleTransport()
+  2. new PianoService()
+  3. new ConnectionService(transport)
+  4. connectionService.setPianoService(pianoService)
+  5. connectionService.setNotificationHandler(pianoService.handleNotification)
+  6. setConnectionService(connectionService)  ← wires useConnection hook
+  7. setPianoService(pianoService)             ← wires usePiano hook
+```
+
+**Why this matters**: Without bootstrap, every hook action (changeTone, connect, etc.) silently no-ops because the service reference is null. If you see hooks returning but doing nothing, check that bootstrap ran.
+
+**Called from**: Top of `App.tsx`, before the component definition (`bootstrap()` at module level).
 
 ## "I want to send a command to the piano"
 
@@ -21,11 +42,13 @@ screens/ → hooks/ → services/ → engine/ + transport/ → store/
 
 ## "The piano sent a notification"
 
-1. Transport's BLE monitor fires, strips framing, calls registered listener
-2. PianoService receives raw bytes, calls `engine.parseNotification(bytes)`
-3. Engine parser returns a typed event: `{ type: 'volume', value: 52 }`
-4. PianoService routes to the correct store: `performanceStore.setVolume(52)`
-5. Screen re-renders via selective Zustand subscription
+1. Transport's BLE monitor fires, strips framing (including running status reconstruction), calls registered listener
+2. ConnectionService receives raw bytes via its subscription
+3. If `pendingStateRead` is true (waiting for RQ1 response): routes through `engine.parseStateResponse()` → returns `NotificationEvent[]`
+4. Otherwise: routes through `engine.parseNotification()` → returns single `NotificationEvent`
+5. Each event is dispatched to `pianoService.handleNotification(event)`
+6. PianoService routes to the correct store: `performanceStore.setVolume(52)`
+7. Screen re-renders via selective Zustand subscription
 
 ## "I want to add a new piano model"
 
@@ -35,10 +58,18 @@ screens/ → hooks/ → services/ → engine/ + transport/ → store/
 4. Register in `src/engine/registry.ts`
 5. Done. No changes to services, transport, screens, or stores.
 
+## "I want to test if services are wired correctly"
+
+Fastest smoke test after bootstrap changes:
+1. Add `console.log('bootstrap complete')` at end of `bootstrap()`
+2. In any screen, check: `const { changeTone } = usePiano()` — if `changeTone` does nothing, bootstrap didn't run
+3. Check `useConnection()` — if `scan()` does nothing, `setConnectionService` was never called
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
+| `app/bootstrap.ts` | Service initialization + wiring (runs before React) |
 | `engine/types.ts` | PianoEngine interface + shared types |
 | `engine/fp30x/FP30XEngine.ts` | FP-30X implementation |
 | `engine/fp30x/sysex.ts` | DT1/RQ1 message builders + checksum |

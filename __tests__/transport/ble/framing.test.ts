@@ -122,6 +122,107 @@ describe('stripBleFraming', () => {
     expect(stripBleFraming([0x80])).toEqual([]);
     expect(stripBleFraming([])).toEqual([]);
   });
+
+  /**
+   * T016: Running status framing tests.
+   *
+   * BLE MIDI packets may use running status where the second (and subsequent)
+   * messages of the same type omit the status byte, reusing the previous one.
+   */
+
+  describe('running status', () => {
+    it('parses two Note On messages where second uses running status', () => {
+      // BLE MIDI packet with running status:
+      // [header, ts, NoteOn(0x90, note1, vel1), ts, RunningStatus(note2, vel2)]
+      // The second Note On omits the 0x90 status byte.
+      const packet = [
+        0x80,       // header
+        0x80,       // timestamp for first message
+        0x90, 0x3c, 0x64,  // Note On C4 vel=100
+        0x80,       // timestamp for second message
+        0x40, 0x50, // Running status: Note On E4 vel=80 (0x90 omitted)
+      ];
+      const messages = stripBleFraming(packet);
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toEqual([0x90, 0x3c, 0x64]); // Note On C4
+      expect(messages[1]).toEqual([0x90, 0x40, 0x50]); // Note On E4 (expanded from running status)
+    });
+
+    it('resets running status at SysEx boundary (F0)', () => {
+      // After a SysEx message, running status should NOT carry over.
+      // Packet: Note On, then SysEx, then data bytes that look like running status
+      // but should NOT be interpreted as Note On.
+      const packet = [
+        0x80,       // header
+        0x80,       // timestamp
+        0x90, 0x3c, 0x64,  // Note On C4 vel=100
+        0x80,       // timestamp
+        0xf0, 0x7e, 0x7f, 0x09, 0x03, 0x80, 0xf7,  // SysEx (GM2 System On)
+        0x80,       // timestamp
+        0x90, 0x40, 0x50,  // Explicit Note On E4 (must have status byte after SysEx)
+      ];
+      const messages = stripBleFraming(packet);
+      // Should get: Note On, SysEx, Note On — three separate messages.
+      // Running status must NOT apply across SysEx boundaries.
+      expect(messages).toHaveLength(3);
+      expect(messages[0]).toEqual([0x90, 0x3c, 0x64]);
+      expect(messages[2]).toEqual([0x90, 0x40, 0x50]);
+    });
+
+    it('running status only applies to channel messages (0x80-0xEF), not system messages', () => {
+      // System messages (0xF0-0xFF) must not set running status.
+      // After a system real-time or common message, running status from a prior
+      // channel message should still apply (per MIDI spec), but system messages
+      // themselves should not become the running status.
+      const packet = [
+        0x80,       // header
+        0x80,       // timestamp
+        0xb0, 0x07, 0x64,  // CC channel 0, controller 7, value 100
+        0x80,       // timestamp
+        0x0a, 0x40, // Running status: CC controller 10, value 64 (0xB0 omitted)
+      ];
+      const messages = stripBleFraming(packet);
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toEqual([0xb0, 0x07, 0x64]); // CC vol
+      expect(messages[1]).toEqual([0xb0, 0x0a, 0x40]); // CC pan (expanded running status)
+    });
+  });
+});
+
+// T016 (A7): Running status tests
+describe('stripBleFraming running status', () => {
+  it('parses two Note On messages where second uses running status', () => {
+    // BLE packet: header, ts, NoteOn(90 40 64), ts, running(42 50)
+    const packet = [0x80, 0x80, 0x90, 0x40, 0x64, 0x80, 0x42, 0x50];
+    const messages = stripBleFraming(packet);
+    expect(messages).toEqual([
+      [0x90, 0x40, 0x64], // First Note On: C3, vel 100
+      [0x90, 0x42, 0x50], // Second (running status): D3, vel 80
+    ]);
+  });
+
+  it('resets running status at SysEx boundary', () => {
+    // After SysEx, running status should not carry over
+    // header, ts, NoteOn, ts, SysEx(F0..F7), ts, explicit NoteOn
+    const packet = [
+      0x80,
+      0x80, 0x90, 0x40, 0x64,       // Note On C3
+      0x80, 0xf0, 0x41, 0x10, 0x80, 0xf7, // SysEx
+      0x80, 0x90, 0x42, 0x50,       // Explicit Note On D3
+    ];
+    const messages = stripBleFraming(packet);
+    expect(messages.length).toBe(3);
+    expect(messages[0]).toEqual([0x90, 0x40, 0x64]);
+    expect(messages[2]).toEqual([0x90, 0x42, 0x50]);
+  });
+
+  it('running status only applies to channel messages, not system', () => {
+    // header, ts, NoteOn, ts, running status data byte
+    const packet = [0x80, 0x80, 0x90, 0x3c, 0x64, 0x80, 0x3e, 0x70];
+    const messages = stripBleFraming(packet);
+    expect(messages).toHaveLength(2);
+    expect(messages[1]).toEqual([0x90, 0x3e, 0x70]);
+  });
 });
 
 describe('base64 conversion', () => {

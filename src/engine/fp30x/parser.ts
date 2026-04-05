@@ -250,7 +250,26 @@ export function parseNotification(rawMidiBytes: number[]): NotificationEvent | n
     return null;
   }
 
-  // Other MIDI messages (CC, PC, etc.) — ignore
+  // T020 (A7): Control Change: 0xBn (channel n) — 3 bytes
+  if ((status & 0xf0) === 0xb0 && rawMidiBytes.length >= 3) {
+    return {
+      type: 'controlChange',
+      channel: status & 0x0f,
+      controller: rawMidiBytes[1],
+      value: rawMidiBytes[2],
+    };
+  }
+
+  // T020 (A7): Program Change: 0xCn (channel n) — 2 bytes
+  if ((status & 0xf0) === 0xc0 && rawMidiBytes.length >= 2) {
+    return {
+      type: 'programChange',
+      channel: status & 0x0f,
+      program: rawMidiBytes[1],
+    };
+  }
+
+  // Other MIDI messages — ignore
   return null;
 }
 
